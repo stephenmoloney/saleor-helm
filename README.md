@@ -9,7 +9,7 @@ When the charts have matured sufficiently, potential goals may include:
   - Update the [PR](https://github.com/mirumee/saleor/pull/2702) in saleor 
   - Submit a pull request to helm/charts for the saleor deployment 
 
-Refer to the [Helm README](.deployment/helm/README.md) file for detailed documentation
+Refer to the [Helm README](deployment/helm/README.md) file for detailed documentation
 
 ### Roadmap
 
