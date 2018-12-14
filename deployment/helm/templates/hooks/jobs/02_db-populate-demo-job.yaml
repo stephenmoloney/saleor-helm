@@ -1,0 +1,110 @@
+{{- if (eq .Values.saleor.jobs.init.prePopulateDemo.enabled true) }}
+---
+# If nginx is enabled and persistence is false, then nginx init will take over instead of this job
+{{- if or (eq .Values.saleor.nginx.serveMedia.enabled false) (eq .Values.saleor.persistence.enabled true) }}
+{{ $thisJob := .Values.saleor.jobs.init.prePopulateDemo }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "saleor.fullname" . }}-db-populate-demo
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": {{ (default 2 $thisJob.weight) | quote }}
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  activeDeadlineSeconds: {{ default 300 $thisJob.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ default 240 $thisJob.ttlSecondsAfterFinished }}
+  backoffLimit: {{ default 5 $thisJob.backOffLimit }}
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: {{ template "saleor.fullname" . }}-db-populate-demo
+      labels:
+        app: {{ template "saleor.name" . }}
+        chart: {{ template "saleor.chart" . }}
+        release: {{ .Release.Name }}
+    spec:
+    {{- if .Values.saleor.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.saleor.image.pullSecret }}
+    {{- end }}
+      volumes:
+        - name: custom-settings
+          configMap:
+          {{- if (not .Values.saleor.django.alternativeSettingsConfigMap) }}
+            name: {{ template "saleor.fullname" . }}-custom-settings
+          {{- else }}
+            name: {{ .Values.saleor.django.alternativeSettingsConfigMap }}
+          {{- end }}
+        - name: saleor-data-media
+        {{- if and (eq .Values.saleor.persistence.enabled true) (.Values.saleor.persistence.existingClaim) }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.saleor.persistence.existingClaim }}
+        {{- else if (eq .Values.saleor.persistence.enabled true) }}
+          persistentVolumeClaim:
+            claimName: {{ default (include "saleor.fullname" .) }}
+        {{- end }}
+      restartPolicy: OnFailure
+      initContainers:
+        # Delay launch of this job until elasticsearch is ready
+      {{ if eq .Values.elasticsearch.enabled true  }}
+        - name: {{ template "saleor.fullname" . }}-db-populate-init-elasticsearch
+          image: "tutum/curl:trusty"
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
+            - >
+{{ include "saleor.elasticsearch.isReady" . | indent 14 }}
+      {{- end }}
+        # Delay launch of this job until redis is ready
+      {{ if eq .Values.redis.enabled true }}
+        - name: {{ template "saleor.fullname" . }}-db-populate-init-redis
+          image: "redis:5-stretch"
+          imagePullPolicy: IfNotPresent
+{{- include "saleor.standardEnv" . | indent 10 }}
+          command:
+            - /bin/bash
+            - -c
+            - >
+{{ include "saleor.redis.isReady" . | indent 14 }}
+      {{- end }}
+        # Set the correct permission for the media folder
+        - name: {{ template "saleor.fullname" . }}-db-populate-init-demo
+          image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command:
+            - chown
+            - -R
+            - saleor:saleor
+            - /app/media
+          volumeMounts:
+            - name: saleor-data-media
+              mountPath: /app/media
+          securityContext:
+            runAsUser: 0
+            privileged: true
+      containers:
+        - name: {{ template "saleor.fullname" . }}-db-populate-demo
+          image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command:
+            - python3
+            - manage.py
+            - populatedb
+{{- include "saleor.standardEnv" . | indent 10 }}
+          volumeMounts:
+            - name: saleor-data-media
+              mountPath: /app/media
+            - name: custom-settings
+              mountPath: /app/saleor/custom-settings.py
+              subPath: custom-settings.py
+              readOnly: true
+{{- end -}}
+{{- end -}}

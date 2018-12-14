@@ -1,0 +1,99 @@
+{{- if or (eq .Values.saleor.nginx.serveStatic.enabled true) (eq .Values.saleor.nginx.serveMedia.enabled true) }}
+---
+{{- $port := .Values.saleor.nginx.containerPort -}}
+{{- $mediaUrl := .Values.saleor.django.mediaUrl -}}
+{{- $staticUrl := .Values.saleor.django.staticUrl -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "saleor.fullname" . }}-nginx-template
+  namespace: {{ .Release.Namespace }}
+data:
+  nginx.conf: |
+    worker_processes  {{ .Values.saleor.nginx.config.workerProcesses }};
+    pid /var/cache/nginx/nginx.pid;
+    events {
+      worker_connections  {{ .Values.saleor.nginx.config.workerConnections }};
+    }
+    http {
+      sendfile on;
+      charset utf-8;
+      tcp_nopush on;
+      tcp_nodelay on;
+      keepalive_timeout 50;
+      client_body_timeout 20;
+      client_header_timeout 20;
+      send_timeout 20;
+      types_hash_max_size 2048;
+      client_max_body_size 100M;
+      client_body_buffer_size 20K;
+      client_header_buffer_size 2k;
+      large_client_header_buffers 2 2k;
+      include /etc/nginx/mime.types;
+      default_type application/octet-stream;
+      gzip on;
+      gzip_static on;
+      gzip_comp_level  2;
+      gzip_min_length  1000;
+      gzip_proxied expired no-cache no-store private auth;
+      gzip_types
+        text/css
+        text/javascript
+        text/xml
+        application/javascript
+        font/truetype
+        font/opentype
+        application/vnd.ms-fontobject
+        image/svg+xml;
+
+    {{- if (eq .Values.saleor.nginx.config.accessLogs.muteHealthChecks true) }}
+      map $http_user_agent $loggable {
+          ~^[kube-probe]  0;
+          default 1;
+      }
+    {{- else }}
+      map $http_user_agent $loggable {
+          default 1;
+      }
+    {{- end }}
+
+    log_format filtered '{{ .Values.saleor.nginx.config.logFormat }}';
+
+    {{- if (eq .Values.saleor.nginx.config.accessLogs.enabled false) }}
+      access_log off;
+    {{- else }}
+      # Do not log internal kubernetes health probes
+      access_log /var/log/nginx/access.log filtered if=$loggable;
+    {{- end }}
+    {{- if (eq .Values.saleor.nginx.config.errorLogs.enabled false) }}
+      error_log /dev/null;
+    {{- else }}
+      error_log /var/log/nginx/error.log {{ .Values.saleor.nginx.config.errorLogs.level }};
+    {{- end }}
+
+    {{- range .Values.saleor.ingress.hosts }}
+      server {
+        listen      {{ $port }};
+        server_name {{ . }};
+        add_header Cache-Control public;
+
+        location {{ $mediaUrl }} {
+            alias /app/media/;
+            expires 30d;
+            autoindex on;
+            autoindex_exact_size off;
+        }
+        location {{ $staticUrl }} {
+            alias /app/static/;
+            expires 1d;
+            autoindex on;
+            autoindex_exact_size off;
+        }
+        location / {
+            root /usr/share/nginx/html/;
+            index index.html;
+        }
+      }
+    {{- end }}
+    }
+{{- end }}

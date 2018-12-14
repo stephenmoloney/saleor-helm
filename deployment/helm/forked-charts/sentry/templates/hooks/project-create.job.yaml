@@ -1,0 +1,143 @@
+{{- if and (eq .Values.user.create true) (eq .Values.user.project.create true) -}}
+{{- $project := .Values.user.project -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ template "fullname" . }}-project-create"
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": {{ (default 15 .Values.jobs.createProject.weight) | quote }}
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  activeDeadlineSeconds: {{ default 120 (.Values.jobs.createProject.activeDeadlineSeconds) }}
+  ttlSecondsAfterFinished: {{ default 120 .Values.jobs.createProject.ttlSecondsAfterFinished }}
+  backoffLimit: {{ default 3 .Values.jobs.createProject.backOffLimit }}
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: "{{ template "fullname" . }}-project-create"
+      labels:
+        app: {{ template "fullname" . }}
+        release: "{{ .Release.Name }}"
+    spec:
+      restartPolicy: OnFailure
+      {{- if .Values.image.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.imagePullSecrets | indent 8 }}
+      {{- end }}
+      initContainers:
+      - name: project-create-job-init
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        command:
+        - bash
+        - -c
+        - >
+          touch /token/token.txt && python /etc/sentry/create_token.py > /token/token.txt;
+        volumeMounts:
+        - mountPath: /etc/sentry
+          name: config
+          readOnly: true
+        - mountPath: /token/
+          name: token
+{{- include "sentry.standardEnv" . | indent 8 }}
+      containers:
+      - name: project-create-job
+        image: "tutum/curl:trusty"
+        imagePullPolicy: IfNotPresent
+        command:
+        - bash
+        - -c
+        - >
+          export token=$(token=$(cat /token/token.txt);token=${token##*'<<<'};printf ${token%'>>>'*}) &&
+          export organization_slug={{ default "sentry" ($project.organization | snakecase | lower) }} &&
+          export team_slug={{ default "sentry" ($project.team | snakecase | lower) }} &&
+          export project_slug={{ default "sentry" ($project.name | snakecase | lower) }} &&
+          export project_name={{ default "sentry" $project.name }} &&
+          curl --silent \
+            -X POST "http://{{ template "fullname" . }}/api/0/teams/${organization_slug}/${team_slug}/projects/" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${token}" \
+            -d "{\"name\": \"${project_name}\", \"slug\": \"${project_slug}\"}";
+        volumeMounts:
+        - mountPath: /token/
+          name: token
+      - name: project-create-job-reset-dsn
+        image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+        imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+        command:
+        - bash
+        - -c
+        - >
+          sleep 15s &&
+          PGPASSWORD=${SENTRY_DB_PASSWORD} psql \
+            --host=${SENTRY_POSTGRES_HOST} \
+            --port=${SENTRY_POSTGRES_PORT} \
+            --username=${SENTRY_DB_USER} \
+            --dbname=${SENTRY_DB_NAME} \
+            --echo-all \
+            --no-password \
+            -c "UPDATE sentry_projectkey SET public_key='${SENTRY_PROJECT_PUBLIC_KEY}', secret_key='${SENTRY_PROJECT_PRIVATE_KEY}' WHERE project_id=( SELECT id FROM sentry_project WHERE name='{{ default "sentry" $project.name }}' )";
+        securityContext:
+          runAsNonRoot: false
+          fsGroup: 0
+          runAsUser: 0
+{{- include "sentry.standardEnv" . | indent 8 }}
+        - name: SENTRY_PROJECT_PUBLIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: {{ template "fullname" . }}
+              key: public-key
+        - name: SENTRY_PROJECT_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+            {{- if .Values.existingSecret }}
+              name: {{ .Values.existingSecret }}
+            {{- else }}
+              name: {{ template "fullname" . }}
+            {{- end }}
+              key: private-key
+        - name: BASH_DEBUG
+          value: "1"
+      - name: project-create-job-remove-token
+        image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+        imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+        command:
+        - bash
+        - -c
+        - >
+          token=$(token=$(cat /token/token.txt);token=${token##*'<<<'};printf ${token%'>>>'*}) &&
+          sleep 30s &&
+          PGPASSWORD=${SENTRY_DB_PASSWORD} psql \
+            --host=${SENTRY_POSTGRES_HOST} \
+            --port=${SENTRY_POSTGRES_PORT} \
+            --username=${SENTRY_DB_USER} \
+            --dbname=${SENTRY_DB_NAME} \
+            --echo-all \
+            --no-password \
+            -c "DELETE FROM sentry_apitoken WHERE token='${token}'";
+        securityContext:
+          runAsNonRoot: false
+          fsGroup: 0
+          runAsUser: 0
+{{- include "sentry.standardEnv" . | indent 8 }}
+        - name: BASH_DEBUG
+          value: "1"
+        volumeMounts:
+        - mountPath: /token/
+          name: token
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "fullname" . }}
+      - name: token
+        emptyDir: {}
+{{- end -}}

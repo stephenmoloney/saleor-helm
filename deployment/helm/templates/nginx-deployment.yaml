@@ -1,0 +1,205 @@
+{{- if or (eq .Values.saleor.nginx.serveStatic.enabled true) (eq .Values.saleor.nginx.serveMedia.enabled true) }}
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "saleor.fullname" . }}-nginx
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.saleor.nginx.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "saleor.name" . }}-nginx
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "saleor.name" . }}-nginx
+        release: {{ .Release.Name }}
+    spec:
+      {{- if .Values.saleor.nginx.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.saleor.nginx.image.pullSecret }}
+      {{- end }}
+      runAsUser:
+        rule: 'MustRunAsNonRoot'
+      volumes:
+        - name: custom-settings
+          configMap:
+          {{- if (not .Values.saleor.django.alternativeSettingsConfigMap) }}
+            name: {{ template "saleor.fullname" . }}-custom-settings
+          {{- else }}
+            name: {{ .Values.saleor.django.alternativeSettingsConfigMap }}
+          {{- end }}
+        - name: saleor-nginx-config
+          configMap:
+            name: {{ template "saleor.fullname" . }}-nginx-template
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+    {{- if (eq .Values.saleor.nginx.serveMedia.enabled true) }}
+      {{- if and (eq .Values.saleor.persistence.enabled true) (.Values.saleor.persistence.existingClaim) }}
+        - name: saleor-data-media
+          persistentVolumeClaim:
+            claimName: {{ .Values.saleor.persistence.existingClaim }}
+      {{- else if (eq .Values.saleor.persistence.enabled true) }}
+        - name: saleor-data-media
+          persistentVolumeClaim:
+            claimName: {{ default (include "saleor.fullname" .) }}
+      {{- else if (eq .Values.saleor.persistence.enabled false) }}
+        - name: saleor-data-media
+          emptyDir:
+            medium: Memory
+      {{- end }}
+    {{- end }}
+      {{- if (eq .Values.saleor.nginx.serveStatic.enabled true) }}
+        - name: saleor-data-static
+          emptyDir:
+            medium: Memory
+      {{- end }}
+      # Static files will always be prepared by the initContainers (in memory is fast)
+      # Media files will only be prepared by the initContainers if .Values.saleor.persistence.enabled false
+      initContainers:
+
+      # Only dependent on redis and elasticsearch if prepopulating the DB with the demo
+      {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
+      {{- if eq .Values.saleor.jobs.init.prePopulateDemo.enabled true }}
+        # Delay launch of this job until elasticsearch is ready
+      {{ if eq .Values.elasticsearch.enabled true }}
+        - name: {{ template "saleor.fullname" . }}-nginx-init-elasticsearch
+          image: "tutum/curl:trusty"
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
+            - >
+{{ include "saleor.elasticsearch.isReady" . | indent 14 }}
+      {{- end }}
+        # Delay launch of this job until redis is ready
+      {{ if eq .Values.redis.enabled true }}
+        - name: {{ template "saleor.fullname" . }}-nginx-init-redis
+          image: "redis:5-stretch"
+          imagePullPolicy: IfNotPresent
+{{- include "saleor.standardEnv" . | indent 10 }}
+          command:
+            - /bin/bash
+            - -c
+            - >
+{{ include "saleor.redis.isReady" . | indent 14 }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+
+        - name: {{ template "saleor.fullname" . }}-nginx-init-config
+          image: "{{ .Values.saleor.nginx.image.repository }}:{{ .Values.saleor.nginx.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - >
+            {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
+              if [ -d /app/media ]; then chown -R 1001:root /app/media; fi;
+            {{- end }}
+            {{- if (eq .Values.saleor.nginx.serveStatic.enabled true) }}
+              if [ -d /app/static ]; then chown -R 1001:root /app/static; fi;
+            {{- end }}
+          volumeMounts:
+          {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
+            - name: saleor-data-media
+              mountPath: /app/media
+          {{- end }}
+          {{- if (eq .Values.saleor.nginx.serveStatic.enabled true) }}
+            - name: saleor-data-static
+              mountPath: /app/static
+          {{- end }}
+          securityContext:
+            runAsUser: 0
+            privileged: true
+
+        - name: {{ template "saleor.fullname" . }}-nginx-init
+          image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+            - >
+            {{- if eq .Values.saleor.nginx.serveStatic.enabled true }}
+              python3 manage.py collectstatic --noinput;
+            {{- end }}
+            {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
+            {{- if eq .Values.saleor.jobs.init.prePopulateDemo.enabled true }}
+              python3 manage.py populatedb && python3 manage.py create_thumbnails;
+            {{- end }}
+            {{- end }}
+{{- include "saleor.standardEnv" . | indent 10 }}
+          volumeMounts:
+          {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
+            - name: saleor-data-media
+              mountPath: /app/media
+          {{- end }}
+          {{- if eq .Values.saleor.nginx.serveStatic.enabled true }}
+            - name: saleor-data-static
+              mountPath: /app/static
+          {{- end }}
+            - name: custom-settings
+              mountPath: /app/saleor/custom-settings.py
+              subPath: custom-settings.py
+              readOnly: true
+          securityContext:
+            runAsUser: 0
+            privileged: true
+
+      containers:
+        - name: {{ template "saleor.fullname" . }}-nginx
+          image: "{{ .Values.saleor.nginx.image.repository }}:{{ .Values.saleor.nginx.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.nginx.image.pullPolicy }}
+          securityContext:
+            runAsUser: 1001
+          ports:
+            - name: http
+              containerPort: {{ .Values.saleor.nginx.containerPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /static/
+              port: http
+{{ toYaml .Values.saleor.nginx.livenessProbeSettings | indent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /static/
+              port: http
+{{ toYaml .Values.saleor.nginx.readinessProbeSettings | indent 12 }}
+          volumeMounts:
+            - name: saleor-nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+          {{- if (eq .Values.saleor.nginx.serveMedia.enabled true) }}
+            - name: saleor-data-media
+              mountPath: /app/media
+              readOnly: true
+          {{- end }}
+          {{- if (eq .Values.saleor.nginx.serveStatic.enabled true) }}
+            - name: saleor-data-static
+              mountPath: /app/static
+              readOnly: true
+          {{- end }}
+          resources:
+{{ toYaml .Values.saleor.nginx.resources | indent 12 }}
+    {{- with .Values.saleor.nginx.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.saleor.nginx.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.saleor.nginx.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+{{- end }}

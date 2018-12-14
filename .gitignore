@@ -1,0 +1,3 @@
+.git
+deployment/helm/charts
+deployment/helm/forked-charts/sentry/charts

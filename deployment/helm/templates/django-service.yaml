@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "saleor.fullname" . }}-django
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.saleor.service.type }}
+  ports:
+    - name: http-django
+      targetPort: http
+      port: {{ .Values.saleor.service.port }}
+      protocol: TCP
+  selector:
+    app: {{ template "saleor.name" . }}-django
+    release: {{ .Release.Name }}

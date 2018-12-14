@@ -1,0 +1,90 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "saleor.fullname" . }}-custom-uwsgi
+  namespace: {{ .Release.Namespace }}
+data:
+  uwsgi.ini: |
+    [uwsgi]
+    die-on-term = true
+
+    if-env = UWSGI_DISABLE_LOGGING
+    disable-logging = $(UWSGI_DISABLE_LOGGING)
+    endif =
+
+    if-env = UWSGI_ENABLE_THREADS
+    enable-threads = $(UWSGI_ENABLE_THREADS)
+    endif =
+    if-not-env = UWSGI_NUMBER_OF_THREADS
+    enable-threads = false
+    endif =
+
+    if-env = UWSGI_HARAKIRI
+    harakiri = $(UWSGI_HARAKIRI)
+    endif =
+
+    if-env = PORT
+    http-socket = :$(PORT)
+    endif =
+    if-not-env = PORT
+    http-socket = :8000
+    endif =
+
+    if-env = UWSGI_LOG_FORMAT
+    log-format = $(UWSGI_LOG_FORMAT)
+    endif =
+    if-not-env = UWSGI_LOG_FORMAT
+    log-format = UWSGI uwsgi "%(method) %(uri) %(proto)" %(status) %(size) %(msecs)ms [PID:%(pid):Worker-%(wid)] [RSS:%(rssM)MB]
+    endif =
+
+    if-env = UWSGI_LOG_MAXSIZE
+    log-maxsize = $(UWSGI_LOG_MAXSIZE)
+    endif =
+
+    if-env = UWSGI_LOG_X_FORWARDED_FOR
+    log-x-forwarded-for = $(UWSGI_LOG_X_FORWARDED_FOR)
+    endif =
+
+    master = true
+
+    if-env = UWSGI_MAX_REQUESTS
+    max-requests = $(UWSGI_MAX_REQUESTS)
+    endif =
+    if-not-env = UWSGI_MAX_REQUESTS
+    max-requests = 100
+    endif =
+
+    memory-report = true
+
+    module = saleor.wsgi:application
+    if-env = UWSGI_PROCESSES
+    processes = $(UWSGI_PROCESSES)
+    endif =
+
+    if-not-env = UWSGI_PROCESSES
+    processes = 4
+    endif =
+
+  {{- if (eq .Values.saleor.django.uwsgi.muteHealthCheckLogs true) }}
+    route = ^/health/ donotlog:
+  {{- end }}
+
+    static-map = /static=/app/static
+
+    if-env = UWSGI_NUMBER_OF_THREADS
+    threads = $(UWSGI_NUMBER_OF_THREADS)
+    endif =
+    if-not-env = UWSGI_NUMBER_OF_THREADS
+    threads = 2
+    endif =
+
+    if-env = UWSGI_MAX_WORKER_LIFETIME
+    max-worker-lifetime = $(UWSGI_MAX_WORKER_LIFETIME)
+    endif =
+
+    mimefile = /etc/mime.types
+
+    if-env = UWSGI_VACUUM
+    vacuum = $(UWSGI_VACUUM)
+    endif =

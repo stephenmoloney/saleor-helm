@@ -1,0 +1,55 @@
+{{- if (eq .Values.saleor.jobs.init.vatUpdates.enabled true) }}
+---
+{{- $thisJob := .Values.saleor.jobs.init.vatUpdates }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "saleor.fullname" . }}-vat-updates
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": {{ (default 5 $thisJob.weight) | quote }}
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  activeDeadlineSeconds: {{ default 300 $thisJob.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ default 240 $thisJob.ttlSecondsAfterFinished }}
+  backoffLimit: {{ default 5 $thisJob.backOffLimit }}
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: {{ template "saleor.fullname" . }}-vat-updates
+      labels:
+        app: {{ template "saleor.name" . }}
+        chart: {{ template "saleor.chart" . }}
+        release: {{ .Release.Name }}
+    spec:
+    {{- if .Values.saleor.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.saleor.image.pullSecret }}
+    {{- end }}
+      volumes:
+        - name: custom-settings
+          configMap:
+          {{- if (not .Values.saleor.django.alternativeSettingsConfigMap) }}
+            name: {{ template "saleor.fullname" . }}-custom-settings
+          {{- else }}
+            name: {{ .Values.saleor.django.alternativeSettingsConfigMap }}
+          {{- end }}
+      restartPolicy: OnFailure
+      containers:
+        - name: {{ template "saleor.fullname" . }}-vat-updates
+          image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command: ["python3", "manage.py", "get_vat_rates"]
+{{- include "saleor.standardEnv" . | indent 10 }}
+          volumeMounts:
+            - name: custom-settings
+              mountPath: /app/saleor/custom-settings.py
+              subPath: custom-settings.py
+              readOnly: true
+{{- end -}}

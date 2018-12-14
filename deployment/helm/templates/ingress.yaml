@@ -1,0 +1,53 @@
+{{- if .Values.saleor.ingress.enabled }}
+---
+{{- $topLevelScope := . -}}
+{{- $ingressPath := .Values.saleor.ingress.path -}}
+{{- $serveMedia := .Values.saleor.nginx.serveMedia.enabled -}}
+{{- $serveStatic := .Values.saleor.nginx.serveStatic.enabled -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "saleor.fullname" . }}-ingress
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- with .Values.saleor.ingress.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+{{- if .Values.saleor.ingress.tls }}
+  tls:
+  {{- range .Values.saleor.ingress.tls }}
+    - hosts:
+      {{- range .hosts }}
+        - {{ . }}
+      {{- end }}
+      secretName: {{ .secretName }}
+  {{- end }}
+{{- end }}
+  rules:
+  {{- range .Values.saleor.ingress.hosts }}
+    - host: {{ . }}
+      http:
+        paths:
+        {{- if (eq $serveMedia true) }}
+          - path: {{ $ingressPath }}media/
+            backend:
+              serviceName: {{ template "saleor.fullname" $topLevelScope }}-nginx
+              servicePort: http-nginx
+        {{- end }}
+        {{- if (eq $serveStatic true) }}
+          - path: {{ $ingressPath }}static/
+            backend:
+              serviceName: {{ template "saleor.fullname" $topLevelScope }}-nginx
+              servicePort: http-nginx
+        {{- end }}
+          - path: {{ $ingressPath }}
+            backend:
+              serviceName: {{ template "saleor.fullname" $topLevelScope }}-django
+              servicePort: http-django
+  {{- end }}
+{{- end }}

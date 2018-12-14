@@ -1,0 +1,96 @@
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "saleor.fullname" . }}-django
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.saleor.django.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "saleor.name" . }}-django
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "saleor.name" . }}-django
+        release: {{ .Release.Name }}
+    spec:
+      {{- if .Values.saleor.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.saleor.image.pullSecret }}
+      {{- end }}
+      volumes:
+        - name: custom-settings
+          configMap:
+          {{- if (not .Values.saleor.django.alternativeSettingsConfigMap) }}
+            name: {{ template "saleor.fullname" . }}-custom-settings
+          {{- else }}
+            name: {{ .Values.saleor.django.alternativeSettingsConfigMap }}
+          {{- end }}
+        - name: custom-uwsgi
+          configMap:
+          {{- if (not .Values.saleor.django.alternativeUwsgiConfigMap) }}
+            name: {{ template "saleor.fullname" . }}-custom-uwsgi
+          {{- else }}
+            name: {{ .Values.saleor.django.alternativeUwsgiConfigMap }}
+          {{- end }}
+        - name: saleor-data-media
+        {{- if and (eq .Values.saleor.persistence.enabled true) (.Values.saleor.persistence.existingClaim) }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.saleor.persistence.existingClaim }}
+        {{- else if (eq .Values.saleor.persistence.enabled true) }}
+          persistentVolumeClaim:
+            claimName: {{ default (include "saleor.fullname" .) }}
+        {{- else }}
+          emptyDir:
+            medium: Memory
+        {{- end }}
+      containers:
+        - name: {{ template "saleor.fullname" . }}-django
+          image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.saleor.django.uwsgi.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/
+              port: http
+{{ toYaml .Values.saleor.django.livenessProbeSettings | indent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health/
+              port: http
+{{ toYaml .Values.saleor.django.readinessProbeSettings | indent 12 }}
+          volumeMounts:
+            - name: saleor-data-media
+              mountPath: /app/media
+            - name: custom-settings
+              mountPath: /app/saleor/custom-settings.py
+              subPath: custom-settings.py
+              readOnly: true
+            - name: custom-uwsgi
+              mountPath: /app/saleor/wsgi/uwsgi.ini
+              subPath: uwsgi.ini
+              readOnly: true
+{{- include "saleor.standardEnv" . | indent 10 }}
+          resources:
+{{ toYaml .Values.saleor.django.resources | indent 12 }}
+    {{- with .Values.saleor.django.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.saleor.django.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.saleor.django.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

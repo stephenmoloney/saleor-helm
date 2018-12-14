@@ -1,0 +1,18 @@
+dependencies:
+- name: postgresql
+  version: "3.0.0"
+  repository: "https://kubernetes-charts.storage.googleapis.com"
+  condition: postgresql.enabled
+- name: redis
+  version: "4.2.1"
+  repository: "https://kubernetes-charts.storage.googleapis.com"
+  condition: redis.enabled
+- name: elasticsearch
+  version: "1.11.1"
+  repository: "https://kubernetes-charts.storage.googleapis.com"
+  condition: elasticsearch.enabled
+- name: sentry
+  version: "0.5.0"
+#  repository: "https://kubernetes-charts.storage.googleapis.com"
+  repository: "file://./forked-charts/sentry"
+  condition: sentry.enabled

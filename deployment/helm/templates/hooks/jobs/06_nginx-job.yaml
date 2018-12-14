@@ -1,0 +1,116 @@
+{{- if eq .Values.saleor.persistence.enabled true }}
+{{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.jobs.init.prePopulateDemo.enabled true) }}
+## Note: Static files will always be served from memory (faster)
+## so these changes will apply only to /app/media
+---
+{{- $thisJob := .Values.saleor.jobs.init.nginx }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "saleor.fullname" . }}-nginx
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": {{ (default 6 $thisJob.weight) | quote }}
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  activeDeadlineSeconds: {{ default 300 $thisJob.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ default 240 $thisJob.ttlSecondsAfterFinished }}
+  backoffLimit: {{ default 5 $thisJob.backOffLimit }}
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: {{ template "saleor.fullname" . }}-nginx
+      labels:
+        app: {{ template "saleor.name" . }}
+        chart: {{ template "saleor.chart" . }}
+        release: {{ .Release.Name }}
+    spec:
+    {{- if .Values.saleor.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.saleor.image.pullSecret }}
+    {{- end }}
+      volumes:
+        - name: custom-settings
+          configMap:
+          {{- if (not .Values.saleor.django.alternativeSettingsConfigMap) }}
+            name: {{ template "saleor.fullname" . }}-custom-settings
+          {{- else }}
+            name: {{ .Values.saleor.django.alternativeSettingsConfigMap }}
+          {{- end }}
+      {{- if .Values.saleor.persistence.existingClaim }}
+        - name: saleor-data-media
+          persistentVolumeClaim:
+            claimName: {{ .Values.saleor.persistence.existingClaim }}
+        {{- else }}
+        - name: saleor-data-media
+          persistentVolumeClaim:
+            claimName: {{ default (include "saleor.fullname" .) }}
+      {{- end }}
+      restartPolicy: OnFailure
+      initContainers:
+        # Delay launch of this job until elasticsearch is ready
+      {{ if eq .Values.elasticsearch.enabled true }}
+        - name: {{ template "saleor.fullname" . }}-nginx-init-elasticsearch
+          image: "tutum/curl:trusty"
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
+            - >
+{{ include "saleor.elasticsearch.isReady" . | indent 14 }}
+      {{- end }}
+        # Delay launch of this job until redis is ready
+      {{ if eq .Values.redis.enabled true }}
+        - name: {{ template "saleor.fullname" . }}-nginx-init-redis
+          image: "redis:5-stretch"
+          imagePullPolicy: IfNotPresent
+{{- include "saleor.standardEnv" . | indent 10 }}
+          command:
+            - /bin/bash
+            - -c
+            - >
+{{ include "saleor.redis.isReady" . | indent 14 }}
+      {{- end }}
+        # Ensure correct permissions are set for media
+        - name: {{ template "saleor.fullname" . }}-nginx-init-config
+          image: "{{ .Values.saleor.nginx.image.repository }}:{{ .Values.saleor.nginx.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - >
+              if [ -d /app/media ]; then chown -R 1001:root /app/media; fi
+          volumeMounts:
+            - name: saleor-data-media
+              mountPath: /app/media
+          securityContext:
+            runAsUser: 0
+            privileged: true
+      containers:
+        - name: {{ template "saleor.fullname" . }}-nginx
+          image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+            - >
+              python3 manage.py populatedb && python3 manage.py create_thumbnails;
+{{- include "saleor.standardEnv" . | indent 10 }}
+          volumeMounts:
+            - name: saleor-data-media
+              mountPath: /app/media
+            - name: custom-settings
+              mountPath: /app/saleor/custom-settings.py
+              subPath: custom-settings.py
+              readOnly: true
+          securityContext:
+            runAsUser: 0
+            privileged: true
+{{- end -}}
+{{- end -}}

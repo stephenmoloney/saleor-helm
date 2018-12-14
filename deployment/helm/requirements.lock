@@ -1,0 +1,15 @@
+dependencies:
+- name: postgresql
+  repository: https://kubernetes-charts.storage.googleapis.com
+  version: 3.0.0
+- name: redis
+  repository: https://kubernetes-charts.storage.googleapis.com
+  version: 4.2.1
+- name: elasticsearch
+  repository: https://kubernetes-charts.storage.googleapis.com
+  version: 1.11.1
+- name: sentry
+  repository: file://./forked-charts/sentry
+  version: 0.5.0
+digest: sha256:f3b83fcbb787d4128c5c2733f8232aeacdc102493364c22ba95b5b5c1de86a15
+generated: 2018-12-12T12:50:36.237683801Z

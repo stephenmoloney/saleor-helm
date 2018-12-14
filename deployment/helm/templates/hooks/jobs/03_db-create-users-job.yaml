@@ -1,0 +1,99 @@
+{{- if and (eq .Values.saleor.jobs.init.createUsers.enabled true) (gt (len .Values.saleor.jobs.init.createUsers.users) 0) }}
+---
+{{- $thisJob := .Values.saleor.jobs.init.createUsers }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "saleor.fullname" . }}-db-create-users
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": {{ (default 3 $thisJob.weight) | quote }}
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  activeDeadlineSeconds: {{ default 300 $thisJob.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ default 240 $thisJob.ttlSecondsAfterFinished }}
+  backoffLimit: {{ default 5 $thisJob.backOffLimit }}
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: {{ template "saleor.fullname" . }}-db-create-users
+      labels:
+        app: {{ template "saleor.name" . }}
+        chart: {{ template "saleor.chart" . }}
+        release: {{ .Release.Name }}
+    spec:
+    {{- if .Values.saleor.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.saleor.image.pullSecret }}
+    {{- end }}
+      volumes:
+        - name: custom-settings
+          configMap:
+          {{- if (not .Values.saleor.django.alternativeSettingsConfigMap) }}
+            name: {{ template "saleor.fullname" . }}-custom-settings
+          {{- else }}
+            name: {{ .Values.saleor.django.alternativeSettingsConfigMap }}
+          {{- end }}
+      restartPolicy: OnFailure
+      containers:
+        - name: {{ template "saleor.fullname" . }}-db-create-users
+          image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command:
+            - python3
+            - manage.py
+            - shell
+            - -c
+            - >
+             """
+             from django.contrib.auth import get_user_model;
+             User = get_user_model();
+
+          {{- range $index, $val := .Values.saleor.jobs.init.createUsers.users }}
+            {{- $email_part_1 := splitList "@" $val.email | first | title -}}
+            {{- $email_part_2 := splitList "." (splitList "@" $val.email | last) | first | title -}}
+            {{- $email_rejoined := cat (cat $email_part_1 $email_part_2) "Pass" -}}
+            {{- $email_env_var := $email_rejoined | snakecase | upper | trim | nospace }}
+
+             user_{{ $index }},created = User.objects.get_or_create(email='{{ $val.email }}',password=os.environ.get('{{ $email_env_var }}','{{ $val.password }}'));
+
+             if created:
+                 user_{{ $index }}.is_staff = {{ $val.isStaff | toString | title }};
+                 user_{{ $index }}.is_superuser = {{ $val.isSuperuser | toString | title }};
+                 user_{{ $index }}.save();
+             else:
+                 user_{{ $index }}.is_staff = {{ $val.isStaff | toString | title }};
+                 user_{{ $index }}.is_superuser = {{ $val.isSuperuser | toString | title }};
+                 user_{{ $index }}.update();
+          {{- end }}
+             """
+{{- include "saleor.standardEnv" . | indent 10 }}
+          {{- if eq .Values.saleor.jobs.init.createUsers.enabled true }}
+          {{- if gt (len .Values.saleor.jobs.init.createUsers.users) 0 }}
+          {{- $topLevelScope := . }}
+          {{- range $user := .Values.saleor.jobs.init.createUsers.users -}}
+            {{ $key := cat (splitList "." ($user.email | lower | snakecase | replace "@" "-" | replace "_" "-") | first) "pass" | replace " " "-" }}
+            - name: {{ $key | upper | replace "-" "_" }}
+              valueFrom:
+                secretKeyRef:
+                {{- if $topLevelScope.Values.saleor.existingSecret }}
+                  name: {{ $topLevelScope.Values.saleor.existingSecret }}
+                {{- else }}
+                  name: {{ template "saleor.fullname" $topLevelScope }}
+                {{- end }}
+                  key: {{ $key }}
+          {{- end -}}
+          {{- end -}}
+          {{- end }}
+          volumeMounts:
+            - name: custom-settings
+              mountPath: /app/saleor/custom-settings.py
+              subPath: custom-settings.py
+              readOnly: true
+{{- end -}}

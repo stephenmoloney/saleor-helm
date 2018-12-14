@@ -1,0 +1,23 @@
+{{- if or (eq .Values.saleor.nginx.serveStatic.enabled true) (eq .Values.saleor.nginx.serveMedia.enabled true) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "saleor.fullname" . }}-nginx
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.saleor.service.type }}
+  ports:
+    - name: http-nginx
+      targetPort: http
+      port: {{ .Values.saleor.service.port }}
+      protocol: TCP
+  selector:
+    app: {{ template "saleor.name" . }}-nginx
+    release: {{ .Release.Name }}
+{{- end }}
+

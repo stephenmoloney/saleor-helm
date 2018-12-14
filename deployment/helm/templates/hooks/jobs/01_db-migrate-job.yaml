@@ -1,0 +1,70 @@
+{{- if (eq .Values.saleor.jobs.init.migrations.enabled true) }}
+---
+{{- $thisJob := .Values.saleor.jobs.init.migrations }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "saleor.fullname" . }}-db-migrate
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": {{ (default 1 $thisJob.weight) | quote }}
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  activeDeadlineSeconds: {{ default 300 $thisJob.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ default 240 $thisJob.ttlSecondsAfterFinished }}
+  backoffLimit: {{ default 5 $thisJob.backOffLimit }}
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: {{ template "saleor.fullname" . }}-db-migrate
+      labels:
+        app: {{ template "saleor.name" . }}
+        chart: {{ template "saleor.chart" . }}
+        release: {{ .Release.Name }}
+    spec:
+    {{- if .Values.saleor.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.saleor.image.pullSecret }}
+    {{- end }}
+      volumes:
+        - name: custom-settings
+          configMap:
+          {{- if (not .Values.saleor.django.alternativeSettingsConfigMap) }}
+            name: {{ template "saleor.fullname" . }}-custom-settings
+          {{- else }}
+            name: {{ .Values.saleor.django.alternativeSettingsConfigMap }}
+          {{- end }}
+      restartPolicy: OnFailure
+      initContainers:
+      # Delay launch this job until postgresql is ready
+      {{ if eq .Values.postgresql.enabled true }}
+        - name: {{ template "saleor.fullname" . }}-db-migrate-demo-init-delay
+          image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+            - >
+{{ include "saleor.postgresql.isReady" . | indent 14 }}
+      {{- end }}
+      containers:
+        - name: {{ template "saleor.fullname" . }}-db-migrate
+          image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
+          imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command:
+            - python3
+            - manage.py
+            - migrate
+{{- include "saleor.standardEnv" . | indent 10 }}
+          volumeMounts:
+            - name: custom-settings
+              mountPath: /app/saleor/custom-settings.py
+              subPath: custom-settings.py
+              readOnly: true
+{{- end -}}

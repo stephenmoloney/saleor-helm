@@ -1,0 +1,26 @@
+{{- if or (eq .Values.saleor.nginx.serveStatic.enabled true) (eq .Values.saleor.nginx.serveMedia.enabled true) }}
+---
+{{- if (eq .Values.saleor.nginx.autoscaling.enabled true) }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ template "saleor.fullname" . }}-nginx
+  labels:
+    app: {{ template "saleor.name" . }}
+    chart: {{ template "saleor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1beta2
+    kind: Deployment
+    name: {{ template "saleor.fullname" . }}-nginx
+  minReplicas: {{ .Values.saleor.nginx.autoscaling.minReplicaCount }}
+  maxReplicas: {{ .Values.saleor.nginx.autoscaling.maxReplicaCount }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.saleor.nginx.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- end }}
