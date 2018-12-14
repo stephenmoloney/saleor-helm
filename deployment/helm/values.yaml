@@ -3,104 +3,103 @@
 # Declare variables to be passed into your templates.
 
 saleor:
-  global:
-    image:
-      repository: mirumee/saleor
-      tag: cffccecbcff1c13ac5c458b630abb38f3e74517a
-      pullPolicy: IfNotPresent
-      # pullSecret:
+  image:
+    repository: mirumee/saleor
+    tag: cffccecbcff1c13ac5c458b630abb38f3e74517a
+    pullPolicy: IfNotPresent
+    # pullSecret:
 
-    # If using the standard saleor-secrets file, then leave this empty
-    # The value of 'existingSecret' is the name of the alternative secrets file to use
-    existingSecret:
+  # If using the standard saleor-secrets file, then leave this empty
+  # The value of 'existingSecret' is the name of the alternative secrets file to use
+  existingSecret:
 
-    service:
-      type: LoadBalancer
-      port: 80
+  service:
+    type: LoadBalancer
+    port: 80
 
-    ingress:
-      enabled: false
-      annotations: {}
-      path: /
-      hosts:
-        - saleor.local
-      tls: []
+  ingress:
+    enabled: false
+    annotations: {}
+    path: /
+    hosts:
+      - saleor.local
+    tls: []
 #        - secretName: saleor-private-key
 #          hosts:
 #            - saleor.local
 
-    # Enable persistence if serving images from a volume
-    persistence:
-      enabled: false
-      accessMode: ReadWriteOnce
-      size: 10Gi
-      volumeMode: Filesystem
-      persistentVolumeReclaimPolicy: Delete
-      # Uncomment storageClass: "" to disable dynamic provisioning
-      # storageClass: ""
-      # To use an existingPvc rather than have it provisioned by this chart, uncomment and enter below
-      # existingPvc:
+  # Enable persistence if serving images from a volume
+  persistence:
+    enabled: false
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    volumeMode: Filesystem
+    persistentVolumeReclaimPolicy: Delete
+    # Uncomment storageClass: "" to disable dynamic provisioning
+    # storageClass: ""
+    # To use an existingPvc rather than have it provisioned by this chart, uncomment and enter below
+    # existingPvc:
 
-    jobs:
-      init:
-        migrations:
-          enabled: true
-          activeDeadlineSeconds:
-          backOffLimit:
-          ttlSecondsAfterFinished:
-          weight: 1
-        prePopulateDemo:
-          enabled: true
-          activeDeadlineSeconds:
-          backOffLimit:
-          ttlSecondsAfterFinished:
-          weight: 2
-        createUsers:
-          enabled: true
-          activeDeadlineSeconds:
-          backOffLimit:
-          ttlSecondsAfterFinished:
-          weight: 3
-          users:
-            - email: saleor-user-1@saleor.local
-              # A password should be supplied through a kubernetes secret and this value left empty, See `secrets.yaml`
-              password: unsafe_password
-              isStaff: false
-              isSuperuser: false
-            - email: saleor-user-2@example.com
-              # A password should be supplied through a kubernetes secret and this value left empty, See `secrets.yaml`
-              password: unsafe_password
-              isStaff: true
-              isSuperuser: false
-            - email: saleor-superuser-1@saleor.local
-              # A password should be supplied through a kubernetes secret and this value left empty, See `secrets.yaml`
-              password: unsafe_password
-              isStaff: true
-              isSuperuser: true
-        currencyUpdates:
-          enabled: true
-          activeDeadlineSeconds:
-          backOffLimit:
-          ttlSecondsAfterFinished:
-          weight: 4
-        vatUpdates:
-          enabled: true
-          activeDeadlineSeconds:
-          backOffLimit:
-          ttlSecondsAfterFinished:
-          weight: 5
-        nginx:
-          activeDeadlineSeconds:
-          backOffLimit:
-          ttlSecondsAfterFinished:
-          weight: 6
-      cron:
-        currencyUpdates:
-          enabled: true
-          cron: "0 6 * * *"
-        vatUpdates:
-          enabled: true
-          cron: "0 7 * * *"
+  jobs:
+    init:
+      migrations:
+        enabled: true
+        activeDeadlineSeconds:
+        backOffLimit:
+        ttlSecondsAfterFinished:
+        weight: 1
+      prePopulateDemo:
+        enabled: true
+        activeDeadlineSeconds:
+        backOffLimit:
+        ttlSecondsAfterFinished:
+        weight: 2
+      createUsers:
+        enabled: true
+        activeDeadlineSeconds:
+        backOffLimit:
+        ttlSecondsAfterFinished:
+        weight: 3
+        users:
+          - email: saleor-user-1@saleor.local
+            # A password should be supplied through a kubernetes secret and this value left empty, See `secrets.yaml`
+            password: unsafe_password
+            isStaff: false
+            isSuperuser: false
+          - email: saleor-user-2@example.com
+            # A password should be supplied through a kubernetes secret and this value left empty, See `secrets.yaml`
+            password: unsafe_password
+            isStaff: true
+            isSuperuser: false
+          - email: saleor-superuser-1@saleor.local
+            # A password should be supplied through a kubernetes secret and this value left empty, See `secrets.yaml`
+            password: unsafe_password
+            isStaff: true
+            isSuperuser: true
+      currencyUpdates:
+        enabled: true
+        activeDeadlineSeconds:
+        backOffLimit:
+        ttlSecondsAfterFinished:
+        weight: 4
+      vatUpdates:
+        enabled: true
+        activeDeadlineSeconds:
+        backOffLimit:
+        ttlSecondsAfterFinished:
+        weight: 5
+      nginx:
+        activeDeadlineSeconds:
+        backOffLimit:
+        ttlSecondsAfterFinished:
+        weight: 6
+    cron:
+      currencyUpdates:
+        enabled: true
+        cron: "0 6 * * *"
+      vatUpdates:
+        enabled: true
+        cron: "0 7 * * *"
 
   # Setting for the django-deployment
   django:
