@@ -29,8 +29,8 @@ jobs:
             docker tag ${DOCKERHUB_URL}:latest ${DOCKERHUB_URL}:${LATEST_SALEOR_TAG}
           fi
 
-    - stage: "docker image push"
-      <<: *docker_prepare
+    - <<: *docker_prepare
+      stage: "docker image push"
       if: branch = master
       script:
        - |
