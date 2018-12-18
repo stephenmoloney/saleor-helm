@@ -1,0 +1,41 @@
+---
+jobs:
+  include:
+    - &docker_prepare
+      stage: "docker image tasks"
+      env:
+        - DOCKERHUB_USERNAME=smoloney
+        - DOCKERHUB_REPO=saleor
+        - DOCKERHUB_URL="${DOCKERHUB_USERNAME}/${DOCKERHUB_REPO}"
+      language: bash
+      before_script:
+       - |
+        git clone https://github.com/mirumee/saleor.git && cd saleor &&
+        export LATEST_SALEOR_TAG=$(git rev-parse --short $(git rev-parse HEAD)) &&
+        export RECENTLY_BUILT_IMAGES=$(curl --silent https://hub.docker.com/v2/repositories/${DOCKERHUB_URL}/tags/  | jq '.results | .[] | .name') &&
+        if [[ ${RECENTLY_BUILT_IMAGES} != "" && ${RECENTLY_BUILT_IMAGES} == *"${LATEST_SALEOR_TAG}"* ]]; then
+          export SKIP=true;
+        fi &&
+        if [[ -z ${SKIP} ]]; then
+          cp ../Dockerfile ./
+        else
+          echo "Skipping the docker tasks because ${DOCKERHUB_USERNAME}/${DOCKERHUB_REPO}:${LATEST_SALEOR_TAG} has already been built"
+        fi
+      script:
+       - |
+          if [[ -z ${SKIP} ]]; then
+            docker build --tag ${DOCKERHUB_URL}:latest . &&
+            docker run --rm ${DOCKERHUB_URL}:latest /bin/bash -c 'echo "build ok"' &&
+            docker tag ${DOCKERHUB_URL}:latest ${DOCKERHUB_URL}:${LATEST_SALEOR_TAG}
+          fi
+
+    - stage: "docker image push"
+      <<: *docker_prepare
+      if: branch = master
+      script:
+       - |
+          if [[ -z ${SKIP} ]]; then
+            echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin;
+            docker push ${DOCKERHUB_URL}:latest;
+            docker push ${DOCKERHUB_URL}:${LATEST_SALEOR_TAG};
+          fi
