@@ -62,6 +62,7 @@ COPY --from=build-nodejs /app/templates /app/templates
 WORKDIR /app
 USER 1001
 RUN \
+    SECRET_KEY=$(cat /proc/sys/kernel/random/uuid | sed 's/-//g') \
     python3 manage.py collectstatic --no-input && \
     useradd --non-unique --uid 1001 --gid 0 --create-home saleor && \
     mkdir -p /app/media /app/static && \
