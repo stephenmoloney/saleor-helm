@@ -2,12 +2,14 @@
 jobs:
   include:
     - &docker_prepare
-      stage: "docker image tasks"
+      stage: "docker build test"
       env:
         - DOCKERHUB_USERNAME=smoloney
         - DOCKERHUB_REPO=saleor
         - DOCKERHUB_URL="${DOCKERHUB_USERNAME}/${DOCKERHUB_REPO}"
       language: bash
+      if: |
+        env(TRAVIS_PULL_REQUEST) != false
       before_script:
        - |
         git clone https://github.com/mirumee/saleor.git && cd saleor &&
@@ -25,17 +27,20 @@ jobs:
        - |
           if [[ -z ${SKIP} ]]; then
             docker build --tag ${DOCKERHUB_URL}:latest . &&
-            docker run --rm ${DOCKERHUB_URL}:latest /bin/bash -c 'echo "build ok"' &&
-            docker tag ${DOCKERHUB_URL}:latest ${DOCKERHUB_URL}:${LATEST_SALEOR_TAG}
+            docker run --rm ${DOCKERHUB_URL}:latest /bin/bash -c 'echo "build ok"'
           fi
 
     - <<: *docker_prepare
       stage: "docker image push"
-      if: branch = master
+      if: |
+        branch = master
       script:
        - |
           if [[ -z ${SKIP} ]]; then
+            docker build --tag ${DOCKERHUB_URL}:latest . &&
+            docker tag ${DOCKERHUB_URL}:latest ${DOCKERHUB_URL}:${LATEST_SALEOR_TAG}
+          fi
+          if [[ -z ${SKIP} ]]; then
             echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin;
-            docker push ${DOCKERHUB_URL}:latest;
-            docker push ${DOCKERHUB_URL}:${LATEST_SALEOR_TAG};
+            docker push ${DOCKERHUB_URL}:latest && docker push ${DOCKERHUB_URL}:${LATEST_SALEOR_TAG};
           fi
