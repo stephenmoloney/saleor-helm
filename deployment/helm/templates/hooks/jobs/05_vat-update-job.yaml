@@ -45,7 +45,13 @@ spec:
         - name: {{ template "saleor.fullname" . }}-vat-updates
           image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
           imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
-          command: ["python3", "manage.py", "get_vat_rates"]
+          command:
+            - python3
+            - manage.py
+            - get_vat_rates
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
 {{- include "saleor.standardEnv" . | indent 10 }}
           volumeMounts:
             - name: custom-settings

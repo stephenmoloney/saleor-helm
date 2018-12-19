@@ -62,6 +62,9 @@ spec:
             - manage.py
             - migrate
 {{- include "saleor.standardEnv" . | indent 10 }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
           volumeMounts:
             - name: custom-settings
               mountPath: /app/saleor/custom-settings.py

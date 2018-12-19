@@ -27,11 +27,15 @@ spec:
             - name: {{ template "saleor.fullname" . }}-currency-updates-cron
               image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
               imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
-              command: ["python3", "manage.py", "update_exchange_rates", "--all"]
+              command:
+                - python3
+                - manage.py
+                - update_exchange_rates
+                - --all
 {{- include "saleor.standardEnv" . | indent 14 }}
               securityContext:
                 runAsNonRoot: true
-                runAsUser: 999
+                runAsUser: 1001
               volumeMounts:
                 - name: custom-settings
                   mountPath: /app/saleor/custom-settings.py

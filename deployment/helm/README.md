@@ -599,7 +599,7 @@ In order for the saleor deployment to function properly, the following secrets s
 | `redis-password`                   | Redis/saleor-redis            | Password for the redis database                                        |  :heavy_check_mark:         |
 | `email-password`                   | Saleor/saleor                 | Password for the sending emails through an smtp provider               |  :x:                        |
 | `open-exchanges-api-key`           | Saleor/saleor                 | API key to make calls to the open exchanges api                        |  :x:                        |
-| `saleor-secret-key`                | Saleor/saleor                 | API key to make calls to the open exchanges api                        |  :heavy_check_mark:         |
+| `saleor-secret-key`                | Saleor/saleor                 | The django secret for the saleor application                           |  :heavy_check_mark:         |
 | `saleor-user-1-saleor-pass`        | Saleor/saleor                 | A default user password in the user-create job                         |  :heavy_check_mark:         |
 | `saleor-user-2-example-pass`       | Saleor/saleor                 | A default user password in the user-create job                         |  :heavy_check_mark:         |
 | `saleor-superuser-1-saleor-pass`   | Saleor/saleor                 | A default superuser password in the user-create job                    |  :heavy_check_mark:         |

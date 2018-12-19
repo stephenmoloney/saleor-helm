@@ -64,7 +64,6 @@ spec:
       # Static files will always be prepared by the initContainers (in memory is fast)
       # Media files will only be prepared by the initContainers if .Values.saleor.persistence.enabled false
       initContainers:
-
       # Only dependent on redis and elasticsearch if prepopulating the DB with the demo
       {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
       {{- if eq .Values.saleor.jobs.init.prePopulateDemo.enabled true }}
@@ -102,11 +101,14 @@ spec:
             - -c
             - >
             {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
-              if [ -d /app/media ]; then chown -R 1001:root /app/media; fi;
+              if [ -d /app/media ]; then chown -R 1001:0 /app/media; fi;
             {{- end }}
             {{- if (eq .Values.saleor.nginx.serveStatic.enabled true) }}
-              if [ -d /app/static ]; then chown -R 1001:root /app/static; fi;
+              if [ -d /app/static ]; then chown -R 1001:0 /app/static; fi;
             {{- end }}
+          securityContext:
+            runAsUser: 0
+            privileged: true
           volumeMounts:
           {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
             - name: saleor-data-media
@@ -116,9 +118,6 @@ spec:
             - name: saleor-data-static
               mountPath: /app/static
           {{- end }}
-          securityContext:
-            runAsUser: 0
-            privileged: true
 
         - name: {{ template "saleor.fullname" . }}-nginx-init
           image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
@@ -132,9 +131,13 @@ spec:
             {{- end }}
             {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
             {{- if eq .Values.saleor.jobs.init.prePopulateDemo.enabled true }}
-              python3 manage.py populatedb && python3 manage.py create_thumbnails;
+              python3 manage.py populatedb &&
+              python3 manage.py create_thumbnails;
             {{- end }}
             {{- end }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
 {{- include "saleor.standardEnv" . | indent 10 }}
           volumeMounts:
           {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
@@ -149,15 +152,13 @@ spec:
               mountPath: /app/saleor/custom-settings.py
               subPath: custom-settings.py
               readOnly: true
-          securityContext:
-            runAsUser: 0
-            privileged: true
 
       containers:
         - name: {{ template "saleor.fullname" . }}-nginx
           image: "{{ .Values.saleor.nginx.image.repository }}:{{ .Values.saleor.nginx.image.tag }}"
           imagePullPolicy: {{ .Values.saleor.nginx.image.pullPolicy }}
           securityContext:
+            runAsNonRoot: true
             runAsUser: 1001
           ports:
             - name: http

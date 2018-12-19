@@ -82,7 +82,7 @@ spec:
           command:
             - chown
             - -R
-            - saleor:saleor
+            - 1001:0
             - /app/media
           volumeMounts:
             - name: saleor-data-media
@@ -98,6 +98,9 @@ spec:
             - python3
             - manage.py
             - populatedb
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
 {{- include "saleor.standardEnv" . | indent 10 }}
           volumeMounts:
             - name: saleor-data-media

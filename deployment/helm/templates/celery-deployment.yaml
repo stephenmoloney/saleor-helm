@@ -94,7 +94,7 @@ spec:
 {{ toYaml .Values.saleor.celery.readinessProbeSettings | indent 12 }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 999
+            runAsUser: 1001
           volumeMounts:
             - name: saleor-data-media
               mountPath: /app/media

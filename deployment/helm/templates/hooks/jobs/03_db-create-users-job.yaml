@@ -91,6 +91,9 @@ spec:
           {{- end -}}
           {{- end -}}
           {{- end }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
           volumeMounts:
             - name: custom-settings
               mountPath: /app/saleor/custom-settings.py
