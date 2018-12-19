@@ -54,6 +54,12 @@ spec:
         - name: {{ template "saleor.fullname" . }}-django
           image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
           imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
+          command:
+            - uwsgi
+            - /app/saleor/wsgi/uwsgi.ini
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
           ports:
             - name: http
               containerPort: {{ .Values.saleor.django.uwsgi.port }}

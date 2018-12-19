@@ -85,7 +85,7 @@ spec:
             - /bin/sh
             - -c
             - >
-              if [ -d /app/media ]; then chown -R 1001:root /app/media; fi
+              if [ -d /app/media ]; then chown -R 1001:0 /app/media; fi
           volumeMounts:
             - name: saleor-data-media
               mountPath: /app/media
@@ -100,8 +100,12 @@ spec:
             - /bin/bash
             - -c
             - >
-              python3 manage.py populatedb && python3 manage.py create_thumbnails;
+              python3 manage.py populatedb &&
+              python3 manage.py create_thumbnails;
 {{- include "saleor.standardEnv" . | indent 10 }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
           volumeMounts:
             - name: saleor-data-media
               mountPath: /app/media
@@ -109,8 +113,5 @@ spec:
               mountPath: /app/saleor/custom-settings.py
               subPath: custom-settings.py
               readOnly: true
-          securityContext:
-            runAsUser: 0
-            privileged: true
 {{- end -}}
 {{- end -}}

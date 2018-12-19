@@ -4,8 +4,8 @@
 
 saleor:
   image:
-    repository: mirumee/saleor
-    tag: cffccecbcff1c13ac5c458b630abb38f3e74517a
+    repository: smoloney/saleor
+    tag: "810604925"
     pullPolicy: IfNotPresent
     # pullSecret:
 
