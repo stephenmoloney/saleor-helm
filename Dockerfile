@@ -60,13 +60,13 @@ COPY --from=build-nodejs /app/saleor/static /app/saleor/static
 COPY --from=build-nodejs /app/webpack-bundle.json /app/
 COPY --from=build-nodejs /app/templates /app/templates
 WORKDIR /app
-USER 1001
 RUN \
     SECRET_KEY=$(cat /proc/sys/kernel/random/uuid | sed 's/-//g') \
     python3 manage.py collectstatic --no-input && \
     useradd --non-unique --uid 1001 --gid 0 --create-home saleor && \
     mkdir -p /app/media /app/static && \
     chown -R 1001:0 /app
+USER 1001
 EXPOSE 8000
 
 CMD ["uwsgi", "/app/saleor/wsgi/uwsgi.ini"]
