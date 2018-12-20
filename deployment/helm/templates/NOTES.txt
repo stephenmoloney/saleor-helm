@@ -1,8 +1,9 @@
-{{- $topLevelScope := . -}}
+{{- $topLevelScope := . }}
 1. Get the saleor application URL as follows:
 
 {{- if .Values.saleor.ingress.enabled }}
 {{- range .Values.saleor.ingress.hosts }}
+
   http{{ if $.Values.saleor.ingress.tls }}s{{ end }}://{{ . }}{{ $.Values.saleor.ingress.path }}
 {{- end }}
 {{- else if contains "NodePort" .Values.saleor.service.type }}
@@ -24,7 +25,8 @@
 2. Get the pre-populated saleor users email and passwords as follows:
 
 {{- if and (eq .Values.saleor.jobs.init.createUsers.enabled true) (gt (len .Values.saleor.jobs.init.createUsers.users) 0) }}
-{{- range $user := .Values.saleor.jobs.init.createUsers.users -}}
+{{- range $user := .Values.saleor.jobs.init.createUsers.users }}
+
   User: {{ $user.email }}
   {{- if and (eq $user.isSuperuser true) (eq $user.isStaff true) }}
   Type: Superuser/Staff
@@ -36,11 +38,11 @@
   Type: Standard
   {{- end }}
   The user password can be obtained by running:
-    {{ $key := cat (splitList "." ($user.email | lower | snakecase | replace "@" "-" | replace "_" "-") | first) "pass" | replace " " "-" }}
+    {{- $key := cat (splitList "." ($user.email | lower | snakecase | replace "@" "-" | replace "_" "-") | first) "pass" | replace " " "-" }}
     {{- if not $topLevelScope.Values.saleor.existingSecret }}
-    kubectl get secret --namespace {{ $topLevelScope.Release.Namespace }} {{ template "saleor.fullname" $topLevelScope }} -o jsonpath="{.data.$key}" | base64 --decode
+    kubectl get secret --namespace {{ $topLevelScope.Release.Namespace }} {{ template "saleor.fullname" $topLevelScope }} -o jsonpath="{.data.{{- $key }}}" | base64 --decode
     {{- else }}
-    kubectl get secret --namespace {{ $topLevelScope.Release.Namespace }} $topLevelScope.Values.saleor.existingSecret -o jsonpath="{.data.$key}" | base64 --decode
+    kubectl get secret --namespace {{ $topLevelScope.Release.Namespace }} {{- $topLevelScope.Values.saleor.existingSecret }} -o jsonpath="{.data.{{- $key }}}" | base64 --decode
     {{- end }}
 {{- end }}
 {{- else }}
@@ -52,9 +54,7 @@
 
 {{- if eq .Values.sentry.enabled true }}
 {{- if .Values.sentry.ingress.enabled }}
-{{- range .Values.sentry.ingress.hosts }}
-  http{{ if $.Values.sentry.ingress.tls }}s{{ end }}://{{ . }}{{ $.Values.sentry.ingress.path }}
-{{- end }}
+  http{{ if gt (len $.Values.sentry.ingress.tls) 0 }}s{{ end }}://{{ .Values.sentry.ingress.hostname}}/
 {{- else if contains "NodePort" .Values.sentry.service.type }}
   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "sentry.fullname" . }})
   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
@@ -69,6 +69,7 @@
   echo "Visit http://127.0.0.1:8080 to use your application"
   kubectl port-forward ${POD_NAME} 8080:80
 {{- end }}
+
 {{- else }}
   echo "Sentry is not enabled"
 {{- end }}
@@ -77,9 +78,15 @@
 4. Get the pre-populated sentry user email and password as follows:
 
 {{- if eq .Values.sentry.enabled true }}
+
   USER: {{ .Values.sentry.user.email }}
-  Get login password with
+  Get login password by running:
+
+  {{- if not $topLevelScope.Values.sentry.existingSecret }}
     kubectl get secret --namespace {{ .Release.Namespace }} {{ template "sentry.fullname" . }} -o jsonpath="{.data.user-password}" | base64 --decode
+  {{- else }}
+    kubectl get secret --namespace {{ $topLevelScope.Release.Namespace }} {{- $topLevelScope.Values.sentry.existingSecret }} -o jsonpath="{.data.{{- $key }}}" | base64 --decode
+  {{- end }}
 {{- else }}
   echo "Sentry is not enabled"
 {{- end }}
