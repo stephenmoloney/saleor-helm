@@ -16,7 +16,7 @@ RUN pip install pipenv
 ADD Pipfile /app/
 ADD Pipfile.lock /app/
 WORKDIR /app
-RUN pipenv install --system --deploy --dev
+RUN pipenv install --system --deploy
 
 
 ###########################
@@ -24,19 +24,15 @@ RUN pipenv install --system --deploy --dev
 ###########################
 FROM node:10 as build-nodejs
 
-ARG STATIC_URL
-ENV STATIC_URL ${STATIC_URL:-/static/}
+ENV STATIC_URL /static/
 ADD webpack.config.js app.json package.json package-lock.json tsconfig.json webpack.d.ts /app/
 WORKDIR /app
-RUN npm install
-
-# Build static
 ADD ./saleor/static /app/saleor/static/
 ADD ./templates /app/templates/
 RUN \
-  STATIC_URL=${STATIC_URL} \
-  npm run build-assets --production && \
-  npm run build-emails --production
+    npm install && \
+    npm run build-assets --production && \
+    npm run build-emails --production
 
 
 ###########################
@@ -44,10 +40,6 @@ RUN \
 ###########################
 FROM python:3.6-slim
 
-ARG STATIC_URL
-ENV \
-    STATIC_URL=${STATIC_URL:-/static/} \
-    PYTHONUNBUFFERED=1
 RUN \
     apt-get update && \
     apt-get install -y libxml2 libssl1.1 libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 shared-mime-info mime-support && \
@@ -61,8 +53,6 @@ COPY --from=build-nodejs /app/webpack-bundle.json /app/
 COPY --from=build-nodejs /app/templates /app/templates
 WORKDIR /app
 RUN \
-    SECRET_KEY=$(cat /proc/sys/kernel/random/uuid | sed 's/-//g') \
-    python3 manage.py collectstatic --no-input && \
     useradd --non-unique --uid 1001 --gid 0 --create-home saleor && \
     mkdir -p /app/media /app/static && \
     chown -R 1001:0 /app
