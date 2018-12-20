@@ -1345,19 +1345,7 @@ sentry:
 
     ## Ingress annotations
     ##
-#    annotations: {}
-    annotations:
-      # contour related
-      kubernetes.io/ingress.class: "contour"
-      contour.heptio.com/request-timeout: "30s"
-      contour.heptio.com/num-retries: "3"
-
-      # ssl certificate related
-#      certmanager.k8s.io/cluster-issuer: default-issuer
-#      kubernetes.io/tls-acme: "true"
-#      certmanager.k8s.io/acme-challenge-type: http01
-#      certmanager.k8s.io/acme-http01-edit-in-place: "true"
-      ingress.kubernetes.io/force-ssl-redirect: "false"
+    annotations: {}
 
     ## Ingress TLS configuration
     ## Secrets must be manually created in the namespace
