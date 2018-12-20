@@ -78,7 +78,7 @@ spec:
             - /bin/bash
             - -c
             - >
-              python3 manage.py collectstatic --noinput --clear;
+              python3 manage.py collectstatic --noinput;
           securityContext:
             runAsNonRoot: true
             runAsUser: 1001
