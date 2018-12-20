@@ -166,13 +166,23 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
+            {{- if eq .Values.saleor.nginx.serveStatic.enabled true }}
               path: /static/
-              port: http
+              port: http-nginx
+            {{- else if eq .Values.saleor.nginx.serveMedia.enabled true }}
+              path: /media/
+              port: http-nginx
+            {{- end }}
 {{ toYaml .Values.saleor.nginx.livenessProbeSettings | indent 12 }}
           readinessProbe:
             httpGet:
+            {{- if eq .Values.saleor.nginx.serveStatic.enabled true }}
               path: /static/
-              port: http
+              port: http-nginx
+            {{- else if eq .Values.saleor.nginx.serveMedia.enabled true }}
+              path: /media/
+              port: http-nginx
+            {{- end }}
 {{ toYaml .Values.saleor.nginx.readinessProbeSettings | indent 12 }}
           volumeMounts:
             - name: saleor-nginx-config

@@ -42,7 +42,7 @@
     {{- if not $topLevelScope.Values.saleor.existingSecret }}
     kubectl get secret --namespace {{ $topLevelScope.Release.Namespace }} {{ template "saleor.fullname" $topLevelScope }} -o jsonpath="{{ (cat "{.data." $key "}") | replace " " "" }}" | base64 --decode
     {{- else }}
-    kubectl get secret --namespace {{ $topLevelScope.Release.Namespace }} {{- $topLevelScope.Values.saleor.existingSecret }} -o jsonpath="{{ (cat "{.data." $key "}") | replace " " "" }}" | base64 --decode
+    kubectl get secret --namespace {{ $topLevelScope.Release.Namespace }} {{ $topLevelScope.Values.saleor.existingSecret }} -o jsonpath="{{ (cat "{.data." $key "}") | replace " " "" }}" | base64 --decode
     {{- end }}
 {{- end }}
 {{- else }}
@@ -85,7 +85,7 @@
   {{- if not $topLevelScope.Values.sentry.existingSecret }}
     kubectl get secret --namespace {{ .Release.Namespace }} {{ template "sentry.fullname" . }} -o jsonpath="{.data.user-password}" | base64 --decode
   {{- else }}
-    kubectl get secret --namespace {{ .Release.Namespace }} {{- $topLevelScope.Values.sentry.existingSecret }} -o jsonpath="{.data.user-password}" | base64 --decode
+    kubectl get secret --namespace {{ .Release.Namespace }} {{ $topLevelScope.Values.sentry.existingSecret }} -o jsonpath="{.data.user-password}" | base64 --decode
   {{- end }}
 {{- else }}
   echo "Sentry is not enabled"
