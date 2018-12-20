@@ -94,12 +94,12 @@ spec:
           livenessProbe:
             httpGet:
               path: /health/
-              port: http
+              port: http-uwsgi
 {{ toYaml .Values.saleor.django.livenessProbeSettings | indent 12 }}
           readinessProbe:
             httpGet:
               path: /health/
-              port: http
+              port: http-uwsgi
 {{ toYaml .Values.saleor.django.readinessProbeSettings | indent 12 }}
           volumeMounts:
           {{- if eq .Values.saleor.nginx.serveStatic.enabled false }}
