@@ -13,7 +13,7 @@ spec:
   type: {{ .Values.saleor.service.type }}
   ports:
     - name: http-nginx
-      targetPort: http
+      targetPort: http-nginx
       port: {{ .Values.saleor.service.port }}
       protocol: TCP
   selector:

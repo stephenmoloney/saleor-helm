@@ -88,7 +88,7 @@ spec:
             runAsNonRoot: true
             runAsUser: 1001
           ports:
-            - name: http
+            - name: http-uwsgi
               containerPort: {{ .Values.saleor.django.uwsgi.port }}
               protocol: TCP
           livenessProbe:

@@ -12,7 +12,7 @@ spec:
   type: {{ .Values.saleor.service.type }}
   ports:
     - name: http-django
-      targetPort: http
+      targetPort: http-uwsgi
       port: {{ .Values.saleor.service.port }}
       protocol: TCP
   selector:

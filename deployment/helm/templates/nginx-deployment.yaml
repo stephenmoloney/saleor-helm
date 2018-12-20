@@ -161,7 +161,7 @@ spec:
             runAsNonRoot: true
             runAsUser: 1001
           ports:
-            - name: http
+            - name: http-nginx
               containerPort: {{ .Values.saleor.nginx.containerPort }}
               protocol: TCP
           livenessProbe:
