@@ -127,7 +127,7 @@ spec:
             - -c
             - >
             {{- if eq .Values.saleor.nginx.serveStatic.enabled true }}
-              python3 manage.py collectstatic --noinput;
+              python3 manage.py collectstatic --noinput --clear;
             {{- end }}
             {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
             {{- if eq .Values.saleor.jobs.init.prePopulateDemo.enabled true }}

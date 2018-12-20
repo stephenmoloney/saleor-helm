@@ -9,26 +9,37 @@ jobs:
         - DOCKERHUB_URL="${DOCKERHUB_USERNAME}/${DOCKERHUB_REPO}"
         - SALEOR_BRANCH=master
       language: bash
+      if: |
+        branch != master
       before_script:
        - |
-        git clone https://github.com/mirumee/saleor.git --branch=${SALEOR_BRANCH} && cd saleor &&
-        export LATEST_SALEOR_TAG=$(git rev-parse --short $(git rev-parse HEAD)) &&
-        export RECENTLY_BUILT_IMAGES=$(curl --silent https://hub.docker.com/v2/repositories/${DOCKERHUB_URL}/tags/  | jq '.results | .[] | .name') &&
-        if [[ ${RECENTLY_BUILT_IMAGES} != "" && ${RECENTLY_BUILT_IMAGES} == *"${LATEST_SALEOR_TAG}"* ]]; then
-          export SKIP=true;
-        fi &&
-        if [[ -z ${SKIP} ]]; then
+          git clone https://github.com/mirumee/saleor.git --branch=${SALEOR_BRANCH} &&
+          cd saleor &&
           cp ../Dockerfile ./
-        fi
       script:
        - |
-          docker build . &&
-          docker run --rm ${DOCKERHUB_URL}:latest /bin/bash -c 'echo "build ok"'
+          docker build --tag ${DOCKERHUB_URL}:local-only . &&
+          docker run --rm ${DOCKERHUB_URL}:local-only /bin/bash -c 'echo "build ok"'
 
     - <<: *docker_prepare
       stage: "docker image push"
       if: |
         branch = master
+      before_script:
+       - |
+          git remote set-branches origin master && git fetch &&
+          export git_diff=$(git diff-tree -r --name-only HEAD remotes/origin/master) &&
+          git clone https://github.com/mirumee/saleor.git --branch=${SALEOR_BRANCH} &&
+          cd saleor &&
+          cp ../Dockerfile ./ &&
+          export LATEST_SALEOR_TAG=$(git rev-parse --short $(git rev-parse HEAD)) &&
+          export RECENTLY_BUILT_IMAGES=$(curl --silent https://hub.docker.com/v2/repositories/${DOCKERHUB_URL}/tags/  | jq '.results | .[] | .name') &&
+          echo ${git_diff} &&
+          if [[ ${RECENTLY_BUILT_IMAGES} != "" && ${RECENTLY_BUILT_IMAGES} == *"${LATEST_SALEOR_TAG}"* ]]; then
+            if [[ "${git_diff}" != *"Dockerfile"* ]]; then
+              export SKIP=true;
+            fi
+          fi
       script:
        - |
           if [[ -z ${SKIP} ]]; then
