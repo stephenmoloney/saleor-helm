@@ -32,7 +32,7 @@ data:
         'version': 1,
         'disable_existing_loggers': False,
         'root': {
-            'level': os.environ.get('ROOT_LOG_LEVEL', 'INFO'),
+            'level': '{{ default INFO .Values.saleor.django.levels.rootLogs }}',
             'handlers': ['console']},
         'formatters': {
             'verbose': {
@@ -46,25 +46,25 @@ data:
                 '()': 'django.utils.log.RequireDebugFalse'}},
         'handlers': {
             'mail_admins': {
-                'level': os.environ.get('MAIL_ADMINS_HANDLER_LEVEL', 'ERROR'),
+                'level': '{{ default ERROR .Values.saleor.django.levels.mailAdminsHandler }}',
                 'filters': ['require_debug_false'],
                 'class': 'django.utils.log.AdminEmailHandler'},
             'console': {
-                'level': os.environ.get('CONSOLE_HANDLER_LEVEL', 'DEBUG'),
+                'level': '{{ default DEBUG .Values.saleor.django.levels.consoleHandler }}',
                 'class': 'logging.StreamHandler',
                 'formatter': 'verbose'}},
         'loggers': {
             'django': {
                 'handlers': ['console', 'mail_admins'],
-                'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
+                'level': '{{ default INFO .Values.saleor.django.levels.djangoLogs }}',
                 'propagate': True},
             'django.server': {
                 'handlers': ['console'],
-                'level': os.environ.get('DJANGO_SERVER_LOG_LEVEL', 'INFO'),
+                'level': '{{ default INFO .Values.saleor.django.levels.djangoServerLogs }}',
                 'propagate': True},
             'saleor': {
                 'handlers': ['console'],
-                'level': os.environ.get('SALEOR_LOG_LEVEL', 'DEBUG'),
+                'level': '{{ default DEBUG .Values.saleor.django.levels.saleorLogs }}',
                 'propagate': True}}}
     if "AVAILABLE_CURRENCIES" in os.environ:
         AVAILABLE_CURRENCIES = get_list(os.environ.get('AVAILABLE_CURRENCIES'))
@@ -75,14 +75,28 @@ data:
     PAGINATE_BY = int(os.environ.get('PAGINATE_BY', 16))
     DASHBOARD_PAGINATE_BY = int(os.environ.get('DASHBOARD_PAGINATE_BY', 30))
     DASHBOARD_SEARCH_LIMIT = int(os.environ.get('DASHBOARD_SEARCH_LIMIT', 5))
-    PLACEHOLDER_IMAGES = {
-        60: os.environ.get('PLACEHOLDER_IMAGE_60', 'images/placeholder60x60.png'),
-        120: os.environ.get('PLACEHOLDER_IMAGE_120', 'images/placeholder120x120.png'),
-        255: os.environ.get('PLACEHOLDER_IMAGE_255', 'images/placeholder255x255.png'),
-        540: os.environ.get('PLACEHOLDER_IMAGE_540', 'images/placeholder540x540.png'),
-        1080: os.environ.get('PLACEHOLDER_IMAGE_1080', 'images/placeholder1080x1080.png')}
     DEFAULT_PLACEHOLDER = PLACEHOLDER_IMAGES[255]
     LOGOUT_ON_PASSWORD_CHANGE = get_bool_from_env('LOGOUT_ON_PASSWORD_CHANGE', False)
     DB_SEARCH_ENABLED = get_bool_from_env('DB_SEARCH_ENABLED', True)
     SECURE_SSL_REDIRECT = get_bool_from_env('ENABLE_SSL', False)
+
+    CHECKOUT_PAYMENT_GATEWAYS = {
+      {{- if eq .Values.saleor.django.payments.dummy.enabled true }}
+        DUMMY: pgettext_lazy('Dummy', 'Dummy gateway'),
+      {{- end }}
+      {{- if eq .Values.saleor.django.payments.braintree.enabled true }}
+        BRAINTREE: pgettext_lazy('Braintree', 'Braintree'),
+      {{- end }}
+      {{- if eq .Values.saleor.django.payments.razorpay.enabled true }}
+        RAZORPAY: pgettext_lazy('Razorpay', 'Razorpay'),
+      {{- end }}
+      {{- if eq .Values.saleor.django.payments.stripe.enabled true }}
+        STRIPE: pgettext_lazy('Stripe', 'Stripe')
+      {{- end }}
+    }
+
+    GRAPHENE = {
+        'RELAY_CONNECTION_ENFORCE_FIRST_OR_LAST': True,
+        'RELAY_CONNECTION_MAX_LIMIT': 100
+    }
 {{- end -}}
