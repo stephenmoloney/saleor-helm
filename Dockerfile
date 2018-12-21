@@ -2,24 +2,23 @@
 ### https://github.com/mirumee/saleor/blob/e3057df41ab6c5689f381dff5f3d5721d685d183/Dockerfile#L2-L75
 FROM python:3.6 as build-python
 
+ADD Pipfile /app/
+ADD Pipfile.lock /app/
+WORKDIR /app
 RUN \
     apt-get -y update && \
     apt-get install -y gettext && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-RUN pip install pipenv
-ADD Pipfile /app/
-ADD Pipfile.lock /app/
-WORKDIR /app
-RUN pipenv install --system --deploy
-
+    rm -rf /var/lib/apt/lists/* && \
+    pip install pipenv && \
+    pipenv install --system --deploy
 
 FROM node:10 as build-nodejs
 
 ADD webpack.config.js app.json package.json package-lock.json tsconfig.json webpack.d.ts /app/
-WORKDIR /app
 ADD ./saleor/static /app/saleor/static/
 ADD ./templates /app/templates/
+WORKDIR /app
 RUN \
     npm install && \
     npm run build-assets --production && \
