@@ -1,10 +1,5 @@
 ### Forked from mirumee/saleor (BSD-3 License)
 ### https://github.com/mirumee/saleor/blob/e3057df41ab6c5689f381dff5f3d5721d685d183/Dockerfile#L2-L75
-
-
-###########################
-### Builder (python) image
-###########################
 FROM python:3.6 as build-python
 
 RUN \
@@ -19,12 +14,8 @@ WORKDIR /app
 RUN pipenv install --system --deploy
 
 
-###########################
-### Builder (nodejs) image
-###########################
 FROM node:10 as build-nodejs
 
-ENV STATIC_URL /static/
 ADD webpack.config.js app.json package.json package-lock.json tsconfig.json webpack.d.ts /app/
 WORKDIR /app
 ADD ./saleor/static /app/saleor/static/
@@ -35,9 +26,6 @@ RUN \
     npm run build-emails --production
 
 
-###########################
-### Runtime (python) image
-###########################
 FROM python:3.6-slim
 
 RUN \
@@ -53,7 +41,7 @@ COPY --from=build-nodejs /app/webpack-bundle.json /app/
 COPY --from=build-nodejs /app/templates /app/templates
 WORKDIR /app
 RUN \
-    useradd --non-unique --uid 1001 --gid 0 --create-home saleor && \
+    useradd --uid 1001 --gid 0 --create-home saleor && \
     mkdir -p /app/media /app/static && \
     chown -R 1001:0 /app
 USER 1001
