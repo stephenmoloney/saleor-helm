@@ -290,11 +290,11 @@ saleor:
         enabled: false
         sandboxMode: true
         merchantId:
-        publicId:
-        # WARNING! privateId should *only* be set in the secrets file for security reasons
+        publicKey:
+        # WARNING! privateKey should *only* be set in the secrets file for security reasons
         # It is here purely as a indication of the available braintree parameters
         # Leave the `saleor.django.payments.braintree.privateId:` field empty!
-        privateId:
+        privateKey:
       dummy:
         enabled: true
       razorpay:
