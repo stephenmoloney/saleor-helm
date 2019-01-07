@@ -32,7 +32,8 @@ jobs:
           git clone https://github.com/mirumee/saleor.git --branch=${SALEOR_BRANCH} &&
           cd saleor &&
           cp ../Dockerfile ./ &&
-          export LATEST_SALEOR_TAG=$(git rev-parse --short $(git rev-parse HEAD)) &&
+          export LATEST_SALEOR_TAG=$(git rev-parse $(git rev-parse HEAD)) &&
+          export LATEST_SALEOR_TAG=${LATEST_SALEOR_TAG:0:6} &&
           export RECENTLY_BUILT_IMAGES=$(curl --silent https://hub.docker.com/v2/repositories/${DOCKERHUB_URL}/tags/  | jq '.results | .[] | .name') &&
           echo ${git_diff} &&
           if [[ ${RECENTLY_BUILT_IMAGES} != "" && ${RECENTLY_BUILT_IMAGES} == *"${LATEST_SALEOR_TAG}"* ]]; then
