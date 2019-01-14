@@ -5,7 +5,7 @@
 saleor:
   image:
     repository: smoloney/saleor
-    tag: "master-d615eb5b0"
+    tag: "master-21de1a"
     pullPolicy: IfNotPresent
     # pullSecret:
 
