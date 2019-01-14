@@ -13,7 +13,7 @@ RUN \
 
 FROM node:10 as build-nodejs
 
-ADD webpack.config.js app.json package.json package-lock.json tsconfig.json webpack.d.ts /app/
+ADD webpack.config.js app.json package.json package-lock.json tsconfig.json tslint.json  webpack.d.ts /app/
 ADD ./saleor/static /app/saleor/static/
 ADD ./templates /app/templates/
 WORKDIR /app
