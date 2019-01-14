@@ -673,7 +673,7 @@ postgresql:
 ### Corresponds to helm/charts/stable/elasticsearch chart.yaml v1.11.1
 ### Refer to https://github.com/helm/charts/blob/master/stable/elasticsearch/values.yaml
 elasticsearch:
-  enabled: true
+  enabled: false
 
   # Default values for elasticsearch.
   # This is a YAML-formatted file.

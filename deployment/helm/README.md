@@ -62,6 +62,30 @@ Features are describe in more depth on the [saleor README](https://github.com/mi
 - Persistent volumes available with a storageclass
 - Sufficient cpu and memory resources for postgresql, redis, elasticsearch, sentry and saleor
 
+*Note:*
+
+- An elasticsearch cluster requires substantial memory resources, it should not be enabled
+ unless the cluster has sufficient resources.
+
+```text
+elasticsearch:
+  enabled: false
+```
+
+- The elasticsearch deployment can delay the total startup time, 
+it may be necessary to increase the helm timeout if elasticsearch is enabled. 
+
+```
+helm install --timeout 900 ... 
+```
+
+- The sentry deployment takes a several minutes for migrations to complete, 
+increase the helm timeout if sentry is enabled.
+
+```
+helm install --timeout 900 ... 
+```
+
 ## Quickstart
 <div>
   <a style="font-size: 400%;" href="#table-of-contents"> ^ top </a>
