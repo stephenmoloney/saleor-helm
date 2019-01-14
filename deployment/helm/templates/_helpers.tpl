@@ -223,8 +223,8 @@ env:
 {{- if eq .Values.elasticsearch.enabled true }}
   - name: ELASTICSEARCH_URL
     value: "http://$(ELASTICSEARCH_HOST):$(ELASTICSEARCH_PORT)"
-{{- else if .Values.saleor.django.externalServices.elasticsearch.enabled true }}
-{{- if .Values.saleor.django.externalServices.elasticsearch.tls true }}
+{{- else if eq .Values.saleor.django.externalServices.elasticsearch.enabled true }}
+{{- if eq .Values.saleor.django.externalServices.elasticsearch.tls true }}
   - name: ELASTICSEARCH_URL
     value: "https://$(ELASTICSEARCH_USER):$(ELASTICSEARCH_PASSWORD)@$(ELASTICSEARCH_HOST):$(ELASTICSEARCH_PORT)"
 {{- else }}
