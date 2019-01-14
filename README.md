@@ -15,9 +15,11 @@ Refer to the [Helm README](deployment/helm/README.md) file for detailed document
 
 See the github [Project Roadmap](https://github.com/stephenmoloney/saleor-helm/projects/1)
 
+## Contributing
+
+Contributions are welcome, please read the [contributing guide](https://raw.githubusercontent.com/stephenmoloney/saleor-helm/master/.github/CONTRIBUTING.md)
 
 ## License
 
 - The license for the saleor charts is the Apache license. [License](#LICENSE)
 - The license for modifications to the sentry charts is the Apache license. [License](#LICENSE)
-- For subcharts refer the [Helm Charts License](https://github.com/helm/charts/blob/master/LICENSE)
