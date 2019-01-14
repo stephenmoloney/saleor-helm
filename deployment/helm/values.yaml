@@ -5,7 +5,7 @@
 saleor:
   image:
     repository: smoloney/saleor
-    tag: "master-21de1a"
+    tag: "master-b46f30"
     pullPolicy: IfNotPresent
     # pullSecret:
 
@@ -141,7 +141,7 @@ saleor:
     mediaUrl: /media/
     enableSilk: false
     defaultCountry: IE
-    defaultCurrency: USD
+    defaultCurrency: EUR
     availableCurrencies:
       - AUD
       - CAD
