@@ -60,7 +60,7 @@ Features are describe in more depth on the [saleor README](https://github.com/mi
 
 - A kubernetes cluster with helm installed
 - Persistent volumes available with a storageclass
-- Sufficient cpu and memory resources for postgresql, redis, elasticsearch, sentry and saleor
+- Sufficient cpu and memory resources for postgresql, redis, elasticsearch and saleor
 
 *Note:*
 
@@ -74,13 +74,6 @@ elasticsearch:
 
 - The elasticsearch deployment can delay the total startup time, 
 it may be necessary to increase the helm timeout if elasticsearch is enabled. 
-
-```
-helm install --timeout 900 ... 
-```
-
-- The sentry deployment takes a several minutes for migrations to complete, 
-increase the helm timeout if sentry is enabled.
 
 ```
 helm install --timeout 900 ... 
@@ -114,10 +107,6 @@ data:
   vat-layer-access-key:
   redis-password:
   postgresql-password:
-  sentry-secret:
-  smtp-password:
-  user-password:
-  private-key:
 ```
 
 ***Step 2:***
@@ -133,24 +122,22 @@ git clone https://github.com/stephenmoloney/saleor-helm.git --branch=master && c
 Install the helm chart
  
 - Modify the `values.yaml` file as required. See [Values configuration](#values-configuration)
-  - `--timeout 900` The timeout must be increased if installing sentry
-  - `--name saleor` The name of the helm release
-  - `--set saleor.existingSecret=saleor-custom` Use an existing secret for saleor
-  - `--set redis.existingSecret=saleor-custom` Use and existing secret for redis
-  - `--set postgresql.existingSecret=saleor-custom` Use and existing secret for postgresql
-  - `--set sentry.existingSecret=saleor-custom` Use and existing secret for sentry
- 
+
+  - For example, if using an existing secret, create a `values-prod.yaml`
+  ```
+  saleor:
+    existingSecret: saleor-custom
+  redis:
+    enabled: true
+    existingSecret: saleor-custom
+  postgresql:
+    enabled: true
+    existingSecret: saleor-custom
+  ```  
 
 ```bash
-helm dependency build ./deployment/helm/forked-charts/sentry && helm dependency build ./deployment/helm;
-
-helm install --name saleor \
---set saleor.existingSecret=saleor-custom \
---set redis.existingSecret=saleor-custom \
---set postgresql.existingSecret=saleor-custom \
---set sentry.existingSecret=saleor-custom \
---timeout 900 \
-./deployment/helm; 
+helm dependency build ./deployment/helm && \
+helm install --name saleor -f values-prod.yaml ./deployment/helm;
 ```
 
 ## Saleor components
@@ -177,11 +164,10 @@ are external to the kubernetes cloud infrastructure. They cannot be optionally s
 | Redis             | :x:                     |
 | Postgresql        | :x:                     |
 | Elasticsearch     | :heavy_check_mark:      |
-| Sentry            | :heavy_check_mark:      |
 
-The app requires redis and postgresql to function properly. Elasticsearch and sentry are optional.
+The app requires redis and postgresql to function properly. Elasticsearch is optional.
 
-The helm installation can deploy redis, postgresql, elasticsearch and sentry or one can use
+The helm installation can deploy redis, postgresql and elasticsearch or one can use
 externally provided deployments of any of these services once the appropriate credentials for the
 service are added to the appropriate kubernetes secrets file.
 
@@ -286,9 +272,6 @@ Secondary charts (subcharts):
 │   ├── elasticsearch-1.11.1.tgz
 │   ├── postgresql-1.0.0.tgz
 │   ├── redis-4.2.1.tgz
-│   └── sentry-0.5.0.tgz
-├── forked-charts
-│   └── sentry
 ├── requirements.lock
 ├── requirements.yaml
 ```
@@ -298,7 +281,6 @@ Secondary charts (subcharts):
 | Elasticsearch                   | https://github.com/helm/charts/tree/master/stable/elasticsearch   | |  
 | Postgresql                      | https://github.com/helm/charts/tree/master/stable/postgresql      | |
 | Redis                           | https://github.com/helm/charts/tree/master/stable/redis           | |
-| Sentry                          | Fork of https://github.com/helm/charts/tree/master/stable/sentry  | This is a fork of the original sentry chart at helm/chasts/stable/sentry and can be found in the repository locally at `forked-charts/sentry`. I plan to make a PR for the required changes to the upstream `helm/stable/sentry` chart but this has not been undertaken yet and merging is also an uncertainty. The changes made allow for easier intergration between saleor or any other app and a sentry project |
 
 ## Chart configuration
 <div>
@@ -573,36 +555,11 @@ Configuration of the subcharts:
 | `postgresql.enabled` | Whether to use an in-cluster deployment of postgresql | `true` | `https://github.com/helm/charts/tree/master/stable/postgresql`
 | `redis.enabled` | Whether to use an in-cluster deployment of redis | `true` | `https://github.com/helm/charts/tree/master/stable/redis`
 | `elasticsearch.enabled` | Whether to use an in-cluster deployment of elasticsearch | `true` | `https://github.com/helm/charts/tree/master/stable/elasticsearch`
-| `sentry.enabled` | Whether to use an in-cluster deployment of sentry | `true` | Currently a local fork of `helm/charts/master/stable/sentry` is being used. Refer to the forked-chart source code.
 
 <div>
   <a style="font-size: 400%;" href="#table-of-contents"> ^ top </a>
 </div>
 <br>
-
-Additional parameters which are unique to the forked sentry chart are described below:
-
-| Parameter              | Description            | Default                |
-| ---------------------- | ---------------------- | ---------------------- |
-| `sentry.existingSecret` | Use an existing secret rather than the default sentry secret | `None`
-| `sentry.jobs.dbInit.weight` | The weight of the sentry database initialization job  | `-3`
-| `sentry.jobs.dbInit.activeDeadlineSeconds` | The number of seconds given to allow the job to complete | `900`
-| `sentry.jobs.dbInit.ttlSecondsAfterFinished` | The number of seconds after successful completion of the job before deleting the associated pod | `120`
-| `sentry.jobs.dbInit.backOffLimit` | The number of attempts of the job before failing the job | `5`
-| `sentry.jobs.createUser.weight` | The weight of the sentry create user job  | `-2`
-| `sentry.jobs.createUser.activeDeadlineSeconds` | The number of seconds given to allow the job to complete | `120`
-| `sentry.jobs.createUser.ttlSecondsAfterFinished` | The number of seconds after successful completion of the job before deleting the associated pod | `120`
-| `sentry.jobs.createUser.backOffLimit` | The number of attempts of the job before failing the job | `3`
-| `sentry.jobs.createProject.weight` | The weight of the sentry database create project job  | `-3`
-| `sentry.jobs.createProject.activeDeadlineSeconds` | The number of seconds given to allow the job to complete | `120`
-| `sentry.jobs.createProject.ttlSecondsAfterFinished` | The number of seconds after successful completion of the job before deleting the associated pod | `120`
-| `sentry.jobs.createProject.backOffLimit` | The number of attempts of the job before failing the job | `3`
-| `sentry.user.project.create` | Whether or not to create a project for the already created user. This attribute is redundant if `sentry.user.create: false` | `true`
-| `sentry.user.project.name` | The name of the newly created sentry project | `saleor-sentry`
-| `sentry.user.project.organization` | The organization of the newly create sentry project | `Sentry`
-| `sentry.user.project.team` | The team of the newly create sentry project | `Sentry`
-| `sentry.user.project.publicKey` | The public project (dsn) keys - a uuid with dashes removed, eg 04cd07df2a494a9db825fec2743561bf. Should be created as a secret rather than in `values.yaml`. A secret will be generated if left empty | `None`
-| `sentry.user.project.privateKey` | The private project (dsn) keys - a uuid with dashes removed, eg 04cd07df2a494a9db825fec2743561bf. Should be created as a secret rather than in `values.yaml`. A secret will be generated if left empty | `None`
 
 ### Secrets configuration
 <div>
@@ -614,10 +571,6 @@ In order for the saleor deployment to function properly, the following secrets s
 
 | Secret                             | Chart/secret                  | Description                                                            |  Autogeneration Possible    |
 | ---------------------------------- | ----------------------------- | ---------------------------------------------------------------------- | --------------------------- |
-| `sentry-secret`                    | Sentry/saleor-sentry          | Django secret                                                          |  :heavy_check_mark:         |
-| `smtp-password`                    | Sentry/saleor-sentry          | Password for the smtp login                                            |  :x:                        |
-| `user-password`                    | Sentry/saleor-sentry          | Password for the user login                                            |  :heavy_check_mark:         |
-| `private-key`                      | Sentry/saleor-sentry          | The private key for newly created sentry project                       |  :heavy_check_mark:         |
 | `postgresql-password`              | Postgresql/saleor-postgresql  | Password for the postgresql database                                   |  :heavy_check_mark:         |
 | `postgresql-replication-password`  | Postgresql/saleor-postgresql  | Replication password for the postgresql database                       |  :heavy_check_mark:         |
 | `redis-password`                   | Redis/saleor-redis            | Password for the redis database                                        |  :heavy_check_mark:         |
@@ -631,7 +584,8 @@ In order for the saleor deployment to function properly, the following secrets s
 | `aws-access-key-secret`            | Saleor/saleor                 | The aws access key secret, required if serving content via s3 (TODO)   |  :x:                        |
 | `ext-redis-pass`                   | Saleor/saleor                 | The password for an external redis database                            |  :x:                        |
 | `ext-postgresql-pass`              | Saleor/saleor                 | The password for an external redis database                            |  :x:                        |
-| `ext-elasticsearch-pass`           | Saleor/saleor                 | The password for an external elasticsearch database                    |  :x:                |
+| `ext-elasticsearch-pass`           | Saleor/saleor                 | The password for an external elasticsearch database                    |  :x:                        |
+| `ext-sentry-dsn`                   | Saleor/saleor                 | The full dsn for the external sentry application                       |  :x:                        |
 
 ## Chart Repository
 <div>
@@ -666,12 +620,10 @@ git clone https://github.com/stephenmoloney/saleor-helm.git --branch=master && c
 Install the helm chart
  
 - Modify the `values.yaml` file as required. See [Values configuration](#values-configuration)
-  - `--timeout 900` The timeout must be increased if installing sentry
-  - `--name saleor` The name of the helm release
 
 ```bash
-helm dependency build ./deployment/helm/forked-charts/sentry && helm dependency build ./deployment/helm;
-helm install --name saleor --timeout 900 ./deployment/helm; 
+helm dependency build ./deployment/helm && \
+helm install --name saleor ./deployment/helm; 
 ```
 
 ### Installation with custom secret
@@ -697,22 +649,22 @@ git clone https://github.com/stephenmoloney/saleor-helm.git --branch=master && c
 Install the helm chart
  
 - Modify the `values.yaml` file as required. See [Values configuration](#values-configuration)
-  - `--timeout 900` The timeout must be increased if installing sentry
-  - `--name saleor` The name of the helm release
-  - `--set saleor.existingSecret=saleor-custom` Use an existing secret for saleor
-  - `--set redis.existingSecret=saleor-custom` Use and existing secret for redis
-  - `--set postgresql.existingSecret=saleor-custom` Use and existing secret for postgresql
-  - `--set sentry.existingSecret=saleor-custom` Use and existing secret for sentry
+
+  - For example, if using an existing secret, create a `values-prod.yaml`
+  ```
+  saleor:
+    existingSecret: saleor-custom
+  redis:
+    enabled: true
+    existingSecret: saleor-custom
+  postgresql:
+    enabled: true
+    existingSecret: saleor-custom
+  ```  
 
 ```bash
-helm dependency build ./deployment/helm/forked-charts/sentry && helm dependency build ./deployment/helm;
-helm install --name saleor \
---set saleor.existingSecret=saleor-custom \
---set redis.existingSecret=saleor-custom \
---set postgresql.existingSecret=saleor-custom \
---set sentry.existingSecret=saleor-custom \
---timeout 900 \
-./deployment/helm;
+helm dependency build ./deployment/helm && \
+helm install --name saleor -f values-prod.yaml ./deployment/helm;
 ```
 
 ## Upgrades

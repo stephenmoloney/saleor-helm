@@ -25,23 +25,6 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 {{- end -}}
 
-{{/*
-Create a default fully qualified sentry app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-*/}}
-{{- define "sentry.fullname" -}}
-{{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
 
 {{/*
 Create chart name and version as used by the chart label.
@@ -59,22 +42,6 @@ envFrom:
   - configMapRef:
       name: {{ template "saleor.fullname" . }}-env
 env:
-{{- if and (eq .Values.sentry.enabled true) (eq .Values.sentry.user.project.create true)  }}
-  - name: SENTRY_PUBLIC_KEY
-    valueFrom:
-      configMapKeyRef:
-        name: {{ .Release.Name }}-sentry
-        key: public-key
-  - name: SENTRY_PRIVATE_KEY
-    valueFrom:
-      secretKeyRef:
-      {{- if .Values.sentry.existingSecret }}
-        name: {{ .Values.sentry.existingSecret }}
-      {{- else }}
-        name: {{ .Release.Name }}-sentry
-      {{- end }}
-        key: private-key
-{{- end }}
 {{- if eq .Values.postgresql.enabled true }}
   - name: POSTGRESQL_PASSWORD
     valueFrom:
@@ -89,11 +56,7 @@ env:
   - name: POSTGRESQL_PASSWORD
     valueFrom:
       secretKeyRef:
-      {{- if .Values.postgresql.existingSecret }}
-        name: {{ .Values.postgresql.existingSecret }}
-      {{- else }}
-        name: {{ .Release.Name }}-postgresql
-      {{- end }}
+        name: {{ .Release.Name }}
         key: ext-postgresql-password
 {{- end }}
 {{- if and (eq .Values.redis.enabled true) (eq .Values.redis.usePassword true) }}
@@ -111,23 +74,22 @@ env:
   - name: REDIS_PASSWORD
     valueFrom:
       secretKeyRef:
-      {{- if .Values.redis.existingSecret }}
-        name: {{ .Values.redis.existingSecret }}
-      {{- else }}
-        name: {{ .Release.Name }}-redis
-      {{- end }}
+        name: {{ template "saleor.fullname" . }}
         key: ext-redis-password
 {{- end }}
 {{- if and (eq .Values.elasticsearch.enabled false) (eq .Values.saleor.django.externalServices.elasticsearch.enabled true) }}
   - name: ELASTICSEARCH_PASSWORD
     valueFrom:
       secretKeyRef:
-      {{- if .Values.existingSecret }}
-        name: {{ .Values.existingSecret }}
-      {{- else }}
         name: {{ template "saleor.fullname" . }}
-      {{- end }}
         key: ext-elasticsearch-password
+{{- end }}
+{{- if eq .Values.saleor.django.externalServices.sentry.enabled true }}
+  - name: SENTRY_DSN
+    valueFrom:
+      secretKeyRef:
+        name: {{ template "saleor.fullname" . }}
+        key: ext-sentry-dsn
 {{- end }}
   - name: EMAIL_PASSWORD
     valueFrom:
