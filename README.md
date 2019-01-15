@@ -15,6 +15,11 @@ Refer to the [Helm README](deployment/helm/README.md) file for detailed document
 
 See the github [Project Roadmap](https://github.com/stephenmoloney/saleor-helm/projects/1)
 
+### Sentry
+
+In order to generate sentry as part of the deployment process, see `fork/sentry-charts`. This 
+fork might be eventually be reintroduced to master. 
+
 ## Contributing
 
 Contributions are welcome, please read the [contributing guide](https://raw.githubusercontent.com/stephenmoloney/saleor-helm/master/.github/CONTRIBUTING.md)

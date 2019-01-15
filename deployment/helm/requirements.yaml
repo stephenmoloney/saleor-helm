@@ -11,8 +11,3 @@ dependencies:
   version: "1.11.1"
   repository: "https://kubernetes-charts.storage.googleapis.com"
   condition: elasticsearch.enabled
-- name: sentry
-  version: "0.5.0"
-#  repository: "https://kubernetes-charts.storage.googleapis.com"
-  repository: "file://./forked-charts/sentry"
-  condition: sentry.enabled
