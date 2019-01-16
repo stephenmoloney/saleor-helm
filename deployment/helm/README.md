@@ -107,6 +107,9 @@ data:
   vat-layer-access-key:
   redis-password:
   postgresql-password:
+  braintree-private-key:
+  razorpay-secret-key:
+  stripe-secret-key:
 ```
 
 ***Step 2:***
@@ -608,6 +611,10 @@ In order for the saleor deployment to function properly, the following secrets s
 | `ext-postgresql-pass`              | Saleor/saleor                 | The password for an external redis database                            |  :x:                        |
 | `ext-elasticsearch-pass`           | Saleor/saleor                 | The password for an external elasticsearch database                    |  :x:                        |
 | `ext-sentry-dsn`                   | Saleor/saleor                 | The full dsn for the external sentry application                       |  :x:                        |
+| `braintree-private-key`            | Saleor/saleor                 | The private key for braintree payments integration                     |  :x:                        |
+| `razorpay-secret-key`              | Saleor/saleor                 | The secret key for razorpay payments integration                       |  :x:                        |
+| `stripe-secret-key`                | Saleor/saleor                 | The secret key for stripe payments integration                         |  :x:                        |
+
 
 ## Chart Repository
 <div>

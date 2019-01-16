@@ -32,7 +32,7 @@ data:
         'version': 1,
         'disable_existing_loggers': False,
         'root': {
-            'level': '{{ default INFO .Values.saleor.django.levels.rootLogs }}',
+            'level': '{{ .Values.saleor.django.levels.rootLogs }}',
             'handlers': ['console']},
         'formatters': {
             'verbose': {
@@ -46,25 +46,25 @@ data:
                 '()': 'django.utils.log.RequireDebugFalse'}},
         'handlers': {
             'mail_admins': {
-                'level': '{{ default ERROR .Values.saleor.django.levels.mailAdminsHandler }}',
+                'level': '{{ .Values.saleor.django.levels.mailAdminsHandler }}',
                 'filters': ['require_debug_false'],
                 'class': 'django.utils.log.AdminEmailHandler'},
             'console': {
-                'level': '{{ default DEBUG .Values.saleor.django.levels.consoleHandler }}',
+                'level': '{{ .Values.saleor.django.levels.consoleHandler }}',
                 'class': 'logging.StreamHandler',
                 'formatter': 'verbose'}},
         'loggers': {
             'django': {
                 'handlers': ['console', 'mail_admins'],
-                'level': '{{ default INFO .Values.saleor.django.levels.djangoLogs }}',
+                'level': '{{ .Values.saleor.django.levels.djangoLogs }}',
                 'propagate': True},
             'django.server': {
                 'handlers': ['console'],
-                'level': '{{ default INFO .Values.saleor.django.levels.djangoServerLogs }}',
+                'level': '{{ .Values.saleor.django.levels.djangoServerLogs }}',
                 'propagate': True},
             'saleor': {
                 'handlers': ['console'],
-                'level': '{{ default DEBUG .Values.saleor.django.levels.saleorLogs }}',
+                'level': '{{ .Values.saleor.django.levels.saleorLogs }}',
                 'propagate': True}}}
     if "AVAILABLE_CURRENCIES" in os.environ:
         AVAILABLE_CURRENCIES = get_list(os.environ.get('AVAILABLE_CURRENCIES'))
