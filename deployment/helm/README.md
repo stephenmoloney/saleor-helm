@@ -107,6 +107,9 @@ data:
   vat-layer-access-key:
   redis-password:
   postgresql-password:
+  braintree-private-key:
+  razorpay-secret-key:
+  stripe-secret-key:
 ```
 
 ***Step 2:***
@@ -460,6 +463,28 @@ Configuration for the parent chart parameters under the namespace `.Values.saleo
 | `saleor.django.externalServices.elasticsearch.host` | The host for the external elasticsearch database | `None`
 | `saleor.django.externalServices.elasticsearch.port` | The host for the external elasticsearch database | `9200`
 | `saleor.django.externalServices.elasticsearch.tls` | Whether to use https instead of http to communicate with the external elasticsearch database | `true`
+| `saleor.django.payments.braintree.enabled` | Enable braintree payments | `false`
+| `saleor.django.payments.braintree.sandboxMode` | Use braintree sandbox mode | `true`
+| `saleor.django.payments.braintree.merchantId` | Braintree merchant id | `None`
+| `saleor.django.payments.braintree.publicId` | Braintree public id | `None`
+| `saleor.django.payments.braintree.privateId` | Braintree private id. Warning ! Leave this empty and set with secret ! | `None`
+| `saleor.django.payments.dummy.enabled` | Enable dummy payments method - for testing/demo purposes | `true`
+| `saleor.django.payments.razorpay.enabled` | Enable razorpay payments | `false`
+| `saleor.django.payments.razorpay.prefill` | Prefill user form data in checkout | `false`
+| `saleor.django.payments.razorpay.storeName` | Name of your store | `None`
+| `saleor.django.payments.razorpay.storeLogo` | Url link to your store logo image | `None`
+| `saleor.django.payments.razorpay.publicKey` | Razorpay public id | `None`
+| `saleor.django.payments.razorpay.secretKey` | Razorpay secret key. Warning ! Leave this empty and set with secret ! | `None`
+| `saleor.django.payments.stripe.enabled` | Enable stripe payments | `false`
+| `saleor.django.payments.stripe.prefill` | Prefill user form data in checkout | `false`
+| `saleor.django.payments.stripe.storeName` | Name of your store | `None`
+| `saleor.django.payments.stripe.storeLogo` | Url link to your store logo image | `None`
+| `saleor.django.payments.stripe.rememberMe` | Remember users for future purchases | `true`
+| `saleor.django.payments.stripe.locale` | The language for the checkout form | `auto`
+| `saleor.django.payments.stripe.billingAddress` | Whether to ask for a billing address | `false`
+| `saleor.django.payments.stripe.shippingAddress` | Whether to ask for a shipping address | `false`
+| `saleor.django.payments.stripe.publicKey` | Stripe public id | `None`
+| `saleor.django.payments.stripe.secretKey` | Stripe secret key. Warning ! Leave this empty and set with secret ! | `None`
 | `saleor.django.tokens.jwt.expires` | Whether the django jwt tokens should expire | `true`
 | `saleor.django.livenessProbeSettings.initialDelaySeconds` | Saleor pod liveness probe initialDelaySeconds | `60`
 | `saleor.django.livenessProbeSettings.periodSeconds` | Saleor pod liveness probe periodSeconds | `15`
@@ -586,6 +611,10 @@ In order for the saleor deployment to function properly, the following secrets s
 | `ext-postgresql-pass`              | Saleor/saleor                 | The password for an external redis database                            |  :x:                        |
 | `ext-elasticsearch-pass`           | Saleor/saleor                 | The password for an external elasticsearch database                    |  :x:                        |
 | `ext-sentry-dsn`                   | Saleor/saleor                 | The full dsn for the external sentry application                       |  :x:                        |
+| `braintree-private-key`            | Saleor/saleor                 | The private key for braintree payments integration                     |  :x:                        |
+| `razorpay-secret-key`              | Saleor/saleor                 | The secret key for razorpay payments integration                       |  :x:                        |
+| `stripe-secret-key`                | Saleor/saleor                 | The secret key for stripe payments integration                         |  :x:                        |
+
 
 ## Chart Repository
 <div>

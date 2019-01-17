@@ -179,12 +179,6 @@ saleor:
       mailAdminsHandler: ERROR
 
     images:
-      placeholders:
-        size_60: images/placeholder60x60.png
-        size_120: images/placeholder120x120.png
-        size_255: images/placeholder255x255.png
-        size_540: images/placeholder540x540.png
-        size_1080: images/placeholder1080x1080.png
       # Note createOnDemand will only be meaningful if .Values.saleor.nginx.serveMedia: false
       # otherwise if nginx is serving media content, it is pre-generated
       createOnDemand: false
@@ -215,6 +209,7 @@ saleor:
       keySecret:
       location: eu-west-1
       queryStringAuth: false
+      defaultAcl:
       static:
         enabled: false
         bucketName:
@@ -251,7 +246,7 @@ saleor:
           username:
           region: eu-west-1
 
-    # openExchangesApiKey, recapthcaPrivateKey, secretKey, vatLayerAccessKey
+    # WARNING! openExchangesApiKey, recapthcaPrivateKey, secretKey, vatLayerAccessKey
     # should all be set in the secrets file and left empty in `values.yaml` for security reasons
     openExchangesApiKey:
     recapthcaPrivateKey:
@@ -289,6 +284,49 @@ saleor:
         enabled: false
         # The dsn should be set in the secrets file rather than in `values.yaml`
         dsn:
+
+    payments:
+      braintree:
+        enabled: false
+        sandboxMode: true
+        merchantId:
+        publicKey:
+        # WARNING! privateKey should *only* be set in the secrets file for security reasons
+        # It is here purely as a indication of the available braintree parameters
+        # Leave the `saleor.django.payments.braintree.privateId:` field empty!
+        privateKey:
+      dummy:
+        enabled: true
+      razorpay:
+        enabled: false
+        # Whether to prefill the customer's email and username
+        prefill: false
+        # Your store name
+        storeName:
+        # Absolute or relative link to store logo
+        storeLogo:
+        publicKey:
+        # WARNING! secretKey should *only* be set in the secrets file for security reasons
+        # It is here purely as a indication of the available razorpay parameters
+        # Leave the `saleor.django.payments.razorpay.secretKey:` field empty!
+        secretKey:
+      stripe:
+        enabled: false
+        # Whether to prefill the customer's email in the checkout form
+        prefill: true
+        # Your store name
+        storeName:
+        # Absolute or relative link to store logo
+        storeLogo:
+        rememberMe: true
+        locale: auto
+        billingAddress: false
+        shippingAddress: false
+        publicKey:
+        # WARNING! secretKey should *only* be set in the secrets file for security reasons
+        # It is here purely as a indication of the available stripe parameters
+        # Leave the `saleor.django.payments.stripe.secretKey:` field empty!
+        secretKey:
 
     tokens:
       jwt:

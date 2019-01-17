@@ -221,6 +221,45 @@ env:
 {{- end -}}
 
 {{/*
+Generate payments secret environment configuration.
+*/}}
+{{- define "saleor.paymentSecretsEnv" }}
+{{- if eq .Values.saleor.django.payments.braintree.enabled true }}
+  - name: BRAINTREE_PRIVATE_KEY
+    valueFrom:
+      secretKeyRef:
+      {{- if .Values.saleor.existingSecret }}
+        name: {{ .Values.saleor.existingSecret }}
+      {{- else }}
+        name: {{ template "saleor.fullname" . }}
+      {{- end }}
+        key: braintree-private-key
+{{- end }}
+{{- if eq .Values.saleor.django.payments.razorpay.enabled true }}
+  - name: RAZORPAY_SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+      {{- if .Values.saleor.existingSecret }}
+        name: {{ .Values.saleor.existingSecret }}
+      {{- else }}
+        name: {{ template "saleor.fullname" . }}
+      {{- end }}
+        key: razorpay-secret-key
+{{- end }}
+{{- if eq .Values.saleor.django.payments.stripe.enabled true }}
+  - name: STRIPE_SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+      {{- if .Values.saleor.existingSecret }}
+        name: {{ .Values.saleor.existingSecret }}
+      {{- else }}
+        name: {{ template "saleor.fullname" . }}
+      {{- end }}
+        key: stripe-secret-key
+{{- end }}
+{{- end }}
+
+{{/*
 A script to check if the saleor-postgresql service is ready
 */}}
 {{- define "saleor.postgresql.isReady" -}}
