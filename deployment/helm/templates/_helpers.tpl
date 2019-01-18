@@ -195,24 +195,24 @@ env:
 {{- end }}
 {{- end }}
 
-{{- if eq .Values.redis.enabled false }}
-{{- if eq .Values.redis.tls true }}
+{{- if and (eq .Values.redis.enabled false) (eq .Values.saleor.django.externalServices.redis.tls true) }}
   - name: REDIS_URL
     value: "rediss://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/$(REDIS_DB_NUMBER)"
   - name: CELERY_BROKER_URL
     value: "rediss://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/$(CELERY_BROKER_DB_NUMBER)"
-{{- else }}
+{{- else if eq .Values.redis.enabled false }}
   - name: REDIS_URL
     value: "redis://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/$(REDIS_DB_NUMBER)"
   - name: CELERY_BROKER_URL
     value: "redis://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/$(CELERY_BROKER_DB_NUMBER)"
 {{- end }}
-{{- else if eq .Values.redis.usePassword true }}
+
+{{- if and (eq .Values.redis.enabled true) (eq .Values.redis.usePassword true) }}
   - name: REDIS_URL
     value: "redis://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/$(REDIS_DB_NUMBER)"
   - name: CELERY_BROKER_URL
     value: "redis://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/$(CELERY_BROKER_DB_NUMBER)"
-{{- else }}
+{{- else if eq .Values.redis.enabled true }}
   - name: REDIS_URL
     value: "redis://$(REDIS_HOST):$(REDIS_PORT)/$(REDIS_DB_NUMBER)"
   - name: CELERY_BROKER_URL
