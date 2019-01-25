@@ -21,7 +21,7 @@ Demos sites can be found as follows:
 
 | App Type  | URL  | Notes |
 |---|---|---|
-| Saleor MVC app | https://store.saleor-demo.com  | Backend rendered templates and business logic |
+| Saleor MVC app | [store.saleor-demo.com]  | Backend rendered templates and business logic |
 | Saleor storefront app  |  TODO | Graphql driven single page app |
 
 The demo of this project will be continuously deployed whenever
@@ -46,5 +46,4 @@ Contributions are welcome, please read the [contributing guide](https://raw.gith
 
 ## License
 
-- The license for the saleor charts is the Apache license. [License](#LICENSE)
-- The license for modifications to the sentry charts is the Apache license. [License](#LICENSE)
+Apache 2.0 license. [License](#LICENSE)
