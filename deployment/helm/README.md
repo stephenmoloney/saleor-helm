@@ -463,6 +463,8 @@ Configuration for the parent chart parameters under the namespace `.Values.saleo
 | `saleor.django.externalServices.elasticsearch.host` | The host for the external elasticsearch database | `None`
 | `saleor.django.externalServices.elasticsearch.port` | The host for the external elasticsearch database | `9200`
 | `saleor.django.externalServices.elasticsearch.tls` | Whether to use https instead of http to communicate with the external elasticsearch database | `true`
+| `saleor.django.externalServices.sentry.enabled` | Whether to use an external sentry application | `false`
+| `saleor.django.externalServices.sentry.dsn` | The dsn for the external sentry application | `false`
 | `saleor.django.payments.braintree.enabled` | Enable braintree payments | `false`
 | `saleor.django.payments.braintree.sandboxMode` | Use braintree sandbox mode | `true`
 | `saleor.django.payments.braintree.merchantId` | Braintree merchant id | `None`
