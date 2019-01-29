@@ -21,7 +21,7 @@ Demos sites can be found as follows:
 
 | App Type  | URL  | Notes |
 |---|---|---|
-| Saleor MVC app | [store.saleor-demo.com]  | Backend rendered templates and business logic |
+| Saleor MVC app | [store.saleor-demo.com](https://store.saleor-demo.com) | Backend rendered templates and business logic |
 | Saleor storefront app  |  TODO | Graphql driven single page app |
 
 The demo of this project will be continuously deployed on the master
@@ -33,7 +33,7 @@ continuous deployment system for kubernetes when:
 
 
 A Braintree sandbox account is setup for the demo site for testing payments.
-Only, the [braintree testing credit card numbers](https://hub.docker.com/r/smoloney/saleor/tags)
+Only, the [braintree testing credit card numbers](https://developers.braintreepayments.com/guides/credit-cards/testing-go-live/php)
 may be used for the braintree testing sandbox.
 
 

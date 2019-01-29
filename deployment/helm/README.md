@@ -211,6 +211,9 @@ Parent Chart (saleor):
 ./deployment/helm/templates/
 ├── celery-deployment.yaml
 ├── celery-hpa.yaml
+├── cronjobs
+│   ├── currency-update-cronjob.yaml
+│   └── vat-update-cronjob.yaml
 ├── custom-settings.yaml
 ├── custom-uwsgi.yaml
 ├── django-deployment.yaml
@@ -218,18 +221,14 @@ Parent Chart (saleor):
 ├── django-service.yaml
 ├── env.yaml
 ├── _helpers.tpl
-├── hooks
-│   ├── cronjobs
-│   │   ├── currency-update-cronjob.yaml
-│   │   └── vat-update-cronjob.yaml
-│   └── jobs
-│       ├── 01_db-migrate-job.yaml
-│       ├── 02_db-populate-demo-job.yaml
-│       ├── 03_db-create-users-job.yaml
-│       ├── 04_currency-update-job.yaml
-│       ├── 05_vat-update-job.yaml
-│       └── 06_nginx-job.yaml
 ├── ingress.yaml
+├── jobs
+│   ├── 01_db-migrate-job.yaml
+│   ├── 02_db-populate-demo-job.yaml
+│   ├── 03_db-create-users-job.yaml
+│   ├── 04_currency-update-job.yaml
+│   ├── 05_vat-update-job.yaml
+│   └── 06_nginx-job.yaml
 ├── nginx-deployment.yaml
 ├── nginx-hpa.yaml
 ├── nginx-service.yaml
@@ -237,6 +236,7 @@ Parent Chart (saleor):
 ├── NOTES.txt
 ├── pvc.yaml
 └── secrets.yaml
+
 ```
 
 | Template                        | Description                                |
