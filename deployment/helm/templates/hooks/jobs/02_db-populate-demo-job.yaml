@@ -95,9 +95,11 @@ spec:
           image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
           imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
           command:
-            - python3
-            - manage.py
-            - populatedb
+            - bash
+            - -c
+            - >
+              python3 manage.py populatedb &&
+              python3 manage.py shell -c 'from saleor.product.models import (Product, ProductType); Product.objects.filter(description__icontains="wine").delete(); Product.objects.filter(description__icontains="beer").delete(); ProductType.objects.filter(name__icontains="beer").delete(); ProductType.objects.filter(name__icontains="wine").delete();'
           securityContext:
             runAsNonRoot: true
             runAsUser: 1001

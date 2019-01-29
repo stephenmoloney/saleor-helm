@@ -132,6 +132,7 @@ spec:
             {{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.persistence.enabled false) }}
             {{- if eq .Values.saleor.jobs.init.prePopulateDemo.enabled true }}
               python3 manage.py populatedb &&
+              python3 manage.py shell -c 'from saleor.product.models import (Product, ProductType); Product.objects.filter(description__icontains="wine").delete(); Product.objects.filter(description__icontains="beer").delete(); ProductType.objects.filter(name__icontains="beer").delete(); ProductType.objects.filter(name__icontains="wine").delete();' &&
               python3 manage.py create_thumbnails;
             {{- end }}
             {{- end }}
