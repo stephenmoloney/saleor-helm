@@ -24,9 +24,9 @@ saleor:
     hosts:
       - saleor.local
     tls: []
-#        - secretName: saleor-private-key
-#          hosts:
-#            - saleor.local
+  #        - secretName: saleor-private-key
+  #          hosts:
+  #            - saleor.local
 
   # Enable persistence if serving images from a volume
   persistence:
@@ -115,7 +115,7 @@ saleor:
       harakiri: 0
       port: 8000
       logFormat: UWSGI uwsgi "%(method) %(uri) %(proto) %(addr)" %(status) %(size) %(msecs)ms [PID:%(pid):Worker-%(wid)] [RSS:%(rssM)MB]
-  #    logFormat: UWSGI uwsgi "%(method) %(uri) %(proto) %(addr) %(var.HTTP_X_FORWARDED_FOR) %(var.HTTP_X_FORWARDED_FOR) %(uagent)" %(status) %(size) %(msecs)ms [PID:%(pid):Worker-%(wid)] [RSS:%(rssM)MB]
+      #    logFormat: UWSGI uwsgi "%(method) %(uri) %(proto) %(addr) %(var.HTTP_X_FORWARDED_FOR) %(var.HTTP_X_FORWARDED_FOR) %(uagent)" %(status) %(size) %(msecs)ms [PID:%(pid):Worker-%(wid)] [RSS:%(rssM)MB]
       logXForwardedFor: true
       logMaxSize: 1024
       muteHealthCheckLogs: true
@@ -166,8 +166,8 @@ saleor:
         - localhost
         - 127.0.0.1
     admins: []
-#      - name: saleor-admin
-#        email: saleor.local
+    #      - name: saleor-admin
+    #        email: saleor.local
 
     # Log levels
     levels:
@@ -710,7 +710,6 @@ postgresql:
   # Define custom environment variables to pass to the image here
   extraEnv: {}
 
-
 ### Overrides charts/elasticsearch/values.yaml
 ### Corresponds to helm/charts/stable/elasticsearch chart.yaml v1.11.1
 ### Refer to https://github.com/helm/charts/blob/master/stable/elasticsearch/values.yaml
@@ -758,9 +757,9 @@ elasticsearch:
     serviceType: ClusterIP
     loadBalancerIP: {}
     loadBalancerSourceRanges: {}
-  ## (dict) If specified, apply these annotations to the client service
-  #  serviceAnnotations:
-  #    example: client-svc-foo
+    ## (dict) If specified, apply these annotations to the client service
+    #  serviceAnnotations:
+    #    example: client-svc-foo
     heapSize: "512m"
     antiAffinity: "soft"
     nodeAffinity: {}
@@ -810,7 +809,7 @@ elasticsearch:
     #   example: master-foo
     podDisruptionBudget:
       enabled: false
-      minAvailable: 2  # Same as `cluster.env.MINIMUM_MASTER_NODES`
+      minAvailable: 2 # Same as `cluster.env.MINIMUM_MASTER_NODES`
       # maxUnavailable: 1
     updateStrategy:
       type: OnDelete
@@ -941,7 +940,8 @@ redis:
   existingSecret:
 
   ## Persist data to a persistent volume
-  persistence: {}
+  persistence:
+    {}
     ## A manually managed Persistent Volume and Claim
     ## Requires persistence.enabled: true
     ## If defined, PVC must be created manually before volume will be bound
@@ -1068,7 +1068,7 @@ redis:
       ##
       # storageClass: "-"
       accessModes:
-      - ReadWriteOnce
+        - ReadWriteOnce
       size: 8Gi
 
     ## Update strategy, can be set to RollingUpdate or onDelete by default.
@@ -1078,7 +1078,6 @@ redis:
       ## Partition update strategy
       ## https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#partitions
       # rollingUpdatePartition:
-
 
   ##
   ## Redis Slave properties
@@ -1145,16 +1144,13 @@ redis:
     ## Redis slave selectors and tolerations for pod assignment
     # nodeSelector: {"beta.kubernetes.io/arch": "amd64"}
     # tolerations: []
-
     ## Use an alternate scheduler, e.g. "stork".
     ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
     ##
     # schedulerName:
-
     ## Redis slave pod Annotation and Labels
     # podLabels: {}
     # podAnnotations: {}
-
     ## Redis slave pod Security Context
     # securityContext:
     #   enabled: true
@@ -1191,16 +1187,13 @@ redis:
     ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
     ##
     # resources: {}
-
     ## Extra arguments for Metrics exporter, for example:
     ## extraArgs:
     ##   check-keys: myKey,myOtherKey
     # extraArgs: {}
-
     ## Metrics exporter labels and tolerations for pod assignment
     # nodeSelector: {"beta.kubernetes.io/arch": "amd64"}
     # tolerations: []
-
     ## Metrics exporter pod Annotation and Labels
     # podAnnotations: {}
     # podLabels: {}
