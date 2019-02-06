@@ -1,3 +1,4 @@
+---
 # Default values for saleor.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -24,9 +25,9 @@ saleor:
     hosts:
       - saleor.local
     tls: []
-#        - secretName: saleor-private-key
-#          hosts:
-#            - saleor.local
+  #        - secretName: saleor-private-key
+  #          hosts:
+  #            - saleor.local
 
   # Enable persistence if serving images from a volume
   persistence:
@@ -62,17 +63,20 @@ saleor:
         weight: 3
         users:
           - email: saleor-user-1@saleor.local
-            # A password should be supplied through a kubernetes secret and this value left empty, See `secrets.yaml`
+            # A password should be supplied through a kubernetes secret.
+            # This value should be left empty, See `secrets.yaml`
             password: unsafe_password
             isStaff: false
             isSuperuser: false
           - email: saleor-user-2@example.com
-            # A password should be supplied through a kubernetes secret and this value left empty, See `secrets.yaml`
+            # A password should be supplied through a kubernetes secret.
+            # This value left empty, See `secrets.yaml`
             password: unsafe_password
             isStaff: true
             isSuperuser: false
           - email: saleor-superuser-1@saleor.local
-            # A password should be supplied through a kubernetes secret and this value left empty, See `secrets.yaml`
+            # A password should be supplied through a kubernetes secret.
+            # This value left empty, See `secrets.yaml`
             password: unsafe_password
             isStaff: true
             isSuperuser: true
@@ -114,8 +118,14 @@ saleor:
       enableThreads: false
       harakiri: 0
       port: 8000
-      logFormat: UWSGI uwsgi "%(method) %(uri) %(proto) %(addr)" %(status) %(size) %(msecs)ms [PID:%(pid):Worker-%(wid)] [RSS:%(rssM)MB]
-  #    logFormat: UWSGI uwsgi "%(method) %(uri) %(proto) %(addr) %(var.HTTP_X_FORWARDED_FOR) %(var.HTTP_X_FORWARDED_FOR) %(uagent)" %(status) %(size) %(msecs)ms [PID:%(pid):Worker-%(wid)] [RSS:%(rssM)MB]
+      logFormat: >-
+        UWSGI uwsgi "%(method) %(uri) %(proto) %(addr)"
+        %(status) %(size) %(msecs)ms
+        [PID:%(pid):Worker-%(wid)] [RSS:%(rssM)MB]
+      #      logFormat: >-
+      #        UWSGI uwsgi "%(method) %(uri) %(proto) %(addr)
+      #        %(var.HTTP_X_FORWARDED_FOR) %(var.HTTP_X_FORWARDED_FOR) %(uagent)"
+      #        %(status) %(size) %(msecs)ms [PID:%(pid):Worker-%(wid)] [RSS:%(rssM)MB]
       logXForwardedFor: true
       logMaxSize: 1024
       muteHealthCheckLogs: true
@@ -166,8 +176,8 @@ saleor:
         - localhost
         - 127.0.0.1
     admins: []
-#      - name: saleor-admin
-#        email: saleor.local
+    #      - name: saleor-admin
+    #        email: saleor.local
 
     # Log levels
     levels:
@@ -192,19 +202,26 @@ saleor:
     # Aws
 
     # Django docs:
-    # Further mirumee docs - https://github.com/mirumee/saleor/blob/master/docs/deployment/s3.rst
-    # django-storages docs - https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
+    # Further mirumee docs -
+    # https://github.com/mirumee/saleor/blob/master/docs/deployment/s3.rst
+    # django-storages docs -
+    # https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
 
     # Aws docs:
-    # Further info on location https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
-    # Further info on buckets https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#create-bucket-intro
+    # Further info on location -
+    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
+    # Further info on buckets -
+    # https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#create-bucket-intro
     # By setting a staticBucketName, static files will be served from aws s3 (eg js, css)
     # By setting a mediaBucketName, media files will be served from aws s3 (eg product images)
-    # Aws docs on custom domains: https://docs.aws.amazon.com/AmazonS3/latest/dev/website-hosting-custom-domain-walkthrough.html
-    # Aws docs on queryStringAuth https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html
+    # Aws docs on custom domains -
+    # https://docs.aws.amazon.com/AmazonS3/latest/dev/website-hosting-custom-domain-walkthrough.html
+    # Aws docs on queryStringAuth -
+    # https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html
     # TODO - implement aws optionally for /static and/or /media
     aws:
-      # keyId and keySecret should be set in the secrets file and left empty in `values.yaml` for security reasons
+      # keyId and keySecret should be set in the secrets file.
+      # Leave empty here in `values.yaml` for security reasons
       keyId:
       keySecret:
       location: eu-west-1
@@ -228,7 +245,8 @@ saleor:
       orderFromEmail:
       smtpSettings:
         # generic should work for a smtp servers like gmail, ovh, mailgun and generic smtp servers
-        # format: smtp://[loginName]@[customDomainName]:[password]@[providerDomainName]:[port]/[extraArgs]
+        # format:
+        # smtp://[loginName]@[customDomainName]:[password]@[providerDomainName]:[port]/[extraArgs]
         # Password should be set in the secrets file under email-password
         password:
         generic:
@@ -256,7 +274,8 @@ saleor:
     externalServices:
       # Note to have effect, .Values.redis.enabled must be false
       redis:
-        # password should be set as ext-redis-password in the secrets file and left empty in `values.yaml` for security reasons
+        # Password should be set as ext-redis-password in the secrets file.
+        # Leave empty in `values.yaml` for security reasons
         password:
         host:
         # tls true => use rediss in url instead of redis
@@ -265,7 +284,8 @@ saleor:
         dbNumber: 0
         celeryBrokerDbNumber: 1
       postgresql:
-        # password should be set as ext-postgresql-password in the secrets file and left empty in `values.yaml` for security reasons
+        # password should be set as ext-postgresql-password in the secrets file.
+        # Leave empty in `values.yaml` for security reasons
         password:
         user:
         host:
@@ -274,7 +294,8 @@ saleor:
         requireSSL: true
       elasticsearch:
         enabled: false
-        # password should be set as ext-elasticsearch-password in the secrets file and left empty in `values.yaml` for security reasons
+        # password should be set as ext-elasticsearch-password in the secrets file.
+        # Leave empty in `values.yaml` for security reasons
         password:
         user:
         host:
@@ -411,7 +432,8 @@ saleor:
     serveStatic:
       enabled: true
     image:
-      # Note, the way the nginx deployment currently setup up is to be only compatible with nginxinc/nginx-unprivileged
+      # Note, the way the nginx deployment currently setup up is to be only compatible
+      # with nginxinc/nginx-unprivileged docker image
       repository: "nginxinc/nginx-unprivileged"
       tag: "1.15.5-alpine"
       pullPolicy: IfNotPresent
@@ -438,7 +460,10 @@ saleor:
       errorLogs:
         enabled: true
         level: warn
-      logFormat: $remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent";
+      logFormat: >-
+        $remote_addr - $remote_user [$time_local]
+        "$request" $status $body_bytes_sent
+        "$http_referer" "$http_user_agent";
     resources:
       requests:
         cpu: 500m
@@ -457,7 +482,8 @@ postgresql:
   enabled: true
 
   ## Global Docker image registry
-  ### Please, note that this will override the image registry for all the images, including dependencies, configured to use the global value
+  ### Please, note that this will override the image registry for all the images,
+  ### including dependencies, configured to use the global value
   ###
   ## global:
   ##   imageRegistry:
@@ -515,15 +541,18 @@ postgresql:
     slaveReplicas: 1
 
   ## PostgreSQL admin user
+  # yamllint disable-line rule:line-length
   ## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#setting-the-root-password-on-first-run
   postgresqlUsername: postgres
 
   ## PostgreSQL password
+  # yamllint disable-line rule:line-length
   ## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#setting-the-root-password-on-first-run
   ##
   # postgresqlPassword:
 
   ## Create a database
+  # yamllint disable-line rule:line-length
   ## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#creating-a-database-on-first-run
   ##
   postgresqlDatabase: saleor
@@ -566,6 +595,7 @@ postgresql:
     port: 5432
 
     ## Specify the nodePort value for the LoadBalancer and NodePort service types.
+    # yamllint disable-line rule:line-length
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
     ##
     # nodePort:
@@ -573,6 +603,7 @@ postgresql:
     ## Provide any additional annotations which may be required. This can be used to
     annotations: {}
     ## Set the LoadBalancer service type to internal only.
+    # yamllint disable-line rule:line-length
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer
     ##
     # loadBalancerIP:
@@ -606,9 +637,11 @@ postgresql:
   ##
   master:
     ## Node, affinity and tolerations labels for pod assignment
+    # yamllint disable rule:line-length
     ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
     ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
     ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#taints-and-tolerations-beta-feature
+    # yamllint enable rule:line-length
     nodeSelector: {}
     affinity: {}
     tolerations: []
@@ -618,9 +651,11 @@ postgresql:
   ##
   slave:
     ## Node, affinity and tolerations labels for pod assignment
+    # yamllint disable rule:line-length
     ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
     ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
     ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#taints-and-tolerations-beta-feature
+    # yamllint enable rule:line-length
     nodeSelector: {}
     affinity: {}
     tolerations: []
@@ -649,6 +684,7 @@ postgresql:
     allowExternal: true
 
   ## Configure extra options for liveness and readiness probes
+  # yamllint disable-line rule:line-length
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
   livenessProbe:
     enabled: true
@@ -684,11 +720,13 @@ postgresql:
       pullPolicy: IfNotPresent
       ## Optionally specify an array of imagePullSecrets.
       ## Secrets must be manually created in the namespace.
+      # yamllint disable-line rule:line-length
       ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
       ##
       # pullSecrets:
       #   - myRegistrKeySecretName
 
+    # yamllint disable-line rule:line-length
     ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
     ## Configure extra options for liveness and readiness probes
     livenessProbe:
@@ -710,9 +748,9 @@ postgresql:
   # Define custom environment variables to pass to the image here
   extraEnv: {}
 
-
 ### Overrides charts/elasticsearch/values.yaml
 ### Corresponds to helm/charts/stable/elasticsearch chart.yaml v1.11.1
+# yamllint disable-line rule:line-length
 ### Refer to https://github.com/helm/charts/blob/master/stable/elasticsearch/values.yaml
 elasticsearch:
   enabled: false
@@ -737,19 +775,24 @@ elasticsearch:
 
   cluster:
     name: "elasticsearch"
-    # If you want X-Pack installed, switch to an image that includes it, enable this option and toggle the features you want
+    # If you want X-Pack installed, switch to an image that includes it,
+    # enable this option and toggle the features you want
     # enabled in the environment variables outlined in the README
     xpackEnable: false
-    # Some settings must be placed in a keystore, so they need to be mounted in from a secret.
+    # Some settings must be placed in a keystore,
+    # so they need to be mounted in from a secret.
     # Use this setting to specify the name of the secret
     # keystoreSecret: eskeystore
     config: {}
     # Custom parameters, as string, to be added to ES_JAVA_OPTS environment variable
     additionalJavaOpts: ""
     env:
+      # yamllint disable-line rule:line-length
       # IMPORTANT: https://www.elastic.co/guide/en/elasticsearch/reference/current/important-settings.html#minimum_master_nodes
-      # To prevent data loss, it is vital to configure the discovery.zen.minimum_master_nodes setting so that each master-eligible
-      # node knows the minimum number of master-eligible nodes that must be visible in order to form a cluster.
+      # To prevent data loss, it is vital to configure the discovery.zen.minimum_master_nodes
+      # setting so that each master-eligible
+      # node knows the minimum number of master-eligible nodes
+      # that must be visible in order to form a cluster.
       MINIMUM_MASTER_NODES: "2"
 
   client:
@@ -758,9 +801,9 @@ elasticsearch:
     serviceType: ClusterIP
     loadBalancerIP: {}
     loadBalancerSourceRanges: {}
-  ## (dict) If specified, apply these annotations to the client service
-  #  serviceAnnotations:
-  #    example: client-svc-foo
+    ## (dict) If specified, apply these annotations to the client service
+    #  serviceAnnotations:
+    #    example: client-svc-foo
     heapSize: "512m"
     antiAffinity: "soft"
     nodeAffinity: {}
@@ -810,7 +853,8 @@ elasticsearch:
     #   example: master-foo
     podDisruptionBudget:
       enabled: false
-      minAvailable: 2  # Same as `cluster.env.MINIMUM_MASTER_NODES`
+      # Same as `cluster.env.MINIMUM_MASTER_NODES`
+      minAvailable: 2
       # maxUnavailable: 1
     updateStrategy:
       type: OnDelete
@@ -859,7 +903,8 @@ redis:
   enabled: true
 
   ## Global Docker image registry
-  ## Please, note that this will override the image registry for all the images, including dependencies, configured to use the global value
+  ## Please, note that this will override the image registry for all the images,
+  # including dependencies, configured to use the global value
   ##
   # global:
   #   imageRegistry:
@@ -871,6 +916,7 @@ redis:
     registry: docker.io
     repository: bitnami/redis
     ## Bitnami Redis image tag
+    # yamllint disable-line rule:line-length
     ## ref: https://github.com/bitnami/bitnami-docker-redis#supported-tags-and-respective-dockerfile-links
     ##
     tag: 4.0.11
@@ -881,6 +927,7 @@ redis:
     pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
+    # yamllint disable-line rule:line-length
     ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
     ##
     # pullSecrets:
@@ -932,16 +979,20 @@ redis:
   ## Use password authentication
   usePassword: false
   ## Redis password (both master and slave)
-  ## Defaults to a random 10-character alphanumeric string if not set and usePassword is true
+  ## Defaults to a random 10-character alphanumeric string if not set
+  # and usePassword is true
+  # yamllint disable-line rule:line-length
   ## ref: https://github.com/bitnami/bitnami-docker-redis#setting-the-server-password-on-first-run
   ##
   password:
   ## Use existing secret (ignores previous password)
-  # Change to a .Values.existing secret if using something other than 'saleor-secrets-namespace`
+  # Change to a .Values.existing secret if using something
+  ## other than 'saleor-secrets-namespace`
   existingSecret:
 
   ## Persist data to a persistent volume
-  persistence: {}
+  persistence:
+    {}
     ## A manually managed Persistent Volume and Claim
     ## Requires persistence.enabled: true
     ## If defined, PVC must be created manually before volume will be bound
@@ -996,6 +1047,7 @@ redis:
     # schedulerName:
 
     ## Configure extra options for Redis Master liveness and readiness probes
+    # yamllint disable-line rule:line-length
     ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
     ##
     livenessProbe:
@@ -1014,8 +1066,10 @@ redis:
       failureThreshold: 5
 
     ## Redis Master Node selectors and tolerations for pod assignment
+    # yamllint disable rule:line-length
     ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
     ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#taints-and-tolerations-beta-feature
+    # yamllint enable rule:line-length
     ##
     # nodeSelector: {"beta.kubernetes.io/arch": "amd64"}
     # tolerations: []
@@ -1030,12 +1084,14 @@ redis:
       port: 6379
 
       ## Specify the nodePort value for the LoadBalancer and NodePort service types.
+      # yamllint disable-line rule:line-length
       ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
       ##
       # nodePort:
 
       ## Provide any additional annotations which may be required. This can be used to
       ## set the LoadBalancer service type to internal only.
+      # yamllint disable-line rule:line-length
       ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer
       ##
       annotations: {}
@@ -1068,22 +1124,24 @@ redis:
       ##
       # storageClass: "-"
       accessModes:
-      - ReadWriteOnce
+        - ReadWriteOnce
       size: 8Gi
 
     ## Update strategy, can be set to RollingUpdate or onDelete by default.
+    # yamllint disable-line rule:line-length
     ## https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets
     statefulset:
       updateStrategy: RollingUpdate
       ## Partition update strategy
+      # yamllint disable-line rule:line-length
       ## https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#partitions
       # rollingUpdatePartition:
-
 
   ##
   ## Redis Slave properties
   ## Note: serviceType and service are mandatory parameters
-  ## The rest of the parameters, if undefined, will inherit those declared in Redis Master
+  ## The rest of the parameters, if undefined, will inherit those declared
+  ## in Redis Master
   ##
   slave:
     ## Slave Service properties
@@ -1097,6 +1155,7 @@ redis:
 
       ## Provide any additional annotations which may be required. This can be used to
       ## set the LoadBalancer service type to internal only.
+      # yamllint disable-line rule:line-length
       ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer
       ##
       annotations: {}
@@ -1116,6 +1175,7 @@ redis:
     affinity: {}
 
     ## Configure extra options for Redis Slave liveness and readiness probes
+    # yamllint disable-line rule:line-length
     ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
     ##
     livenessProbe:
@@ -1145,16 +1205,14 @@ redis:
     ## Redis slave selectors and tolerations for pod assignment
     # nodeSelector: {"beta.kubernetes.io/arch": "amd64"}
     # tolerations: []
-
     ## Use an alternate scheduler, e.g. "stork".
+    # yamllint disable-line rule:line-length
     ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
     ##
     # schedulerName:
-
     ## Redis slave pod Annotation and Labels
     # podLabels: {}
     # podAnnotations: {}
-
     ## Redis slave pod Security Context
     # securityContext:
     #   enabled: true
@@ -1173,6 +1231,7 @@ redis:
       pullPolicy: IfNotPresent
       ## Optionally specify an array of imagePullSecrets.
       ## Secrets must be manually created in the namespace.
+      # yamllint disable-line rule:line-length
       ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
       ##
       # pullSecrets:
@@ -1191,23 +1250,21 @@ redis:
     ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
     ##
     # resources: {}
-
     ## Extra arguments for Metrics exporter, for example:
     ## extraArgs:
     ##   check-keys: myKey,myOtherKey
     # extraArgs: {}
-
     ## Metrics exporter labels and tolerations for pod assignment
     # nodeSelector: {"beta.kubernetes.io/arch": "amd64"}
     # tolerations: []
-
     ## Metrics exporter pod Annotation and Labels
     # podAnnotations: {}
     # podLabels: {}
 
   ##
   ## Init containers parameters:
-  ## volumePermissions: Change the owner of the persist volume mountpoint to RunAsUser:fsGroup
+  ## volumePermissions: Change the owner of the persist volume mountpoint
+  ## to RunAsUser:fsGroup
   ##
 
   volumePermissions:

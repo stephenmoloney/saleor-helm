@@ -1,6 +1,6 @@
 {{- if or (eq .Values.saleor.nginx.serveStatic.enabled true) (eq .Values.saleor.nginx.serveMedia.enabled true) }}
 ---
-{{- if (eq .Values.saleor.nginx.autoscaling.enabled true) }}
+{{- if eq .Values.saleor.nginx.autoscaling.enabled true }}
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:

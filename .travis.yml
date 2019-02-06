@@ -1,8 +1,35 @@
 ---
+stages:
+  - yaml-lint
+  - build
+  - push
+
 jobs:
   include:
+    - stage: yaml-lint
+      language: bash
+      env:
+        - YAMLLINT_VERSION="1.14.0"
+        - PRETTIER_VERSION="1.16"
+        - WORKSPACE="/ci-actions/workspace"
+      before_script:
+        - docker pull smoloney/ci-actions-yamllint:${YAMLLINT_VERSION} > /dev/null
+        - docker pull smoloney/ci-actions-prettier:${PRETTIER_VERSION} > /dev/null
+      script:
+        - |
+          docker run --rm -v ${PWD}:${WORKSPACE} \
+          smoloney/ci-actions-yamllint:${YAMLLINT_VERSION} \
+          --exclude=./deployment/helm/templates \
+          --exec-args='--strict --config-file=.yamllint.yml' && \
+
+          docker run --rm -v ${PWD}:/ci-actions/workspace \
+          smoloney/ci-actions-prettier:${PRETTIER_VERSION} \
+          --exclude=./deployment/helm/templates \
+          --file-glob=*.y*ml \
+          --exec-args='--check --parser yaml --config ./.prettierrc.yml'
+
     - &docker_prepare
-      stage: "docker build test"
+      stage: build
       env:
         - DOCKERHUB_USERNAME=smoloney
         - DOCKERHUB_REPO=saleor
@@ -12,21 +39,21 @@ jobs:
       if: |
         branch != master
       before_script:
-       - |
+        - |
           git clone https://github.com/mirumee/saleor.git --branch=${SALEOR_BRANCH} &&
           cd saleor &&
           cp ../Dockerfile ./
       script:
-       - |
+        - |
           docker build --tag ${DOCKERHUB_URL}:local-only . &&
           docker run --rm ${DOCKERHUB_URL}:local-only /bin/bash -c 'echo "build ok"'
 
     - <<: *docker_prepare
-      stage: "docker image push"
+      stage: push
       if: |
         branch = master
       before_script:
-       - |
+        - |
           git remote set-branches origin master && git fetch &&
           export git_diff=$(git diff-tree -r --name-only HEAD remotes/origin/master) &&
           git clone https://github.com/mirumee/saleor.git --branch=${SALEOR_BRANCH} &&
@@ -34,18 +61,25 @@ jobs:
           cp ../Dockerfile ./ &&
           export LATEST_SALEOR_TAG=$(git rev-parse $(git rev-parse HEAD)) &&
           export LATEST_SALEOR_TAG=${LATEST_SALEOR_TAG:0:6} &&
-          export RECENTLY_BUILT_IMAGES=$(curl --silent https://hub.docker.com/v2/repositories/${DOCKERHUB_URL}/tags/  | jq '.results | .[] | .name') &&
+          export RECENTLY_BUILT_IMAGES=$(
+            curl --silent https://hub.docker.com/v2/repositories/${DOCKERHUB_URL}/tags/ | \
+            jq '.results | .[] | .name'
+          ) &&
           echo ${git_diff} &&
-          if [[ ${RECENTLY_BUILT_IMAGES} != "" && ${RECENTLY_BUILT_IMAGES} == *"${LATEST_SALEOR_TAG}"* ]]; then
+          if [[ ${RECENTLY_BUILT_IMAGES} != "" && \
+              ${RECENTLY_BUILT_IMAGES} == *"${LATEST_SALEOR_TAG}"* ]]; then
             if [[ "${git_diff}" != *"Dockerfile"* ]]; then
               export SKIP=true;
             fi
           fi
       script:
-       - |
+        - |
           if [[ -z ${SKIP} ]]; then
-            echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+            echo "${DOCKERHUB_PASSWORD}" | \
+            docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
             docker build --tag ${DOCKERHUB_URL}:latest . &&
-            docker tag ${DOCKERHUB_URL}:latest ${DOCKERHUB_URL}:${SALEOR_BRANCH}-${LATEST_SALEOR_TAG} &&
-            docker push ${DOCKERHUB_URL}:latest && docker push ${DOCKERHUB_URL}:${SALEOR_BRANCH}-${LATEST_SALEOR_TAG}
+            docker tag ${DOCKERHUB_URL}:latest \
+            ${DOCKERHUB_URL}:${SALEOR_BRANCH}-${LATEST_SALEOR_TAG} &&
+            docker push ${DOCKERHUB_URL}:latest && docker push \
+            ${DOCKERHUB_URL}:${SALEOR_BRANCH}-${LATEST_SALEOR_TAG}
           fi
