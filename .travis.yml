@@ -21,9 +21,10 @@ jobs:
           smoloney/ci-actions-yamllint:${YAMLLINT_VERSION} \
           --exclude=./deployment/helm/templates \
           --exec-args='--strict --config-file=.yamllint.yml' && \
+
           docker run --rm -v ${PWD}:/ci-actions/workspace \
           smoloney/ci-actions-prettier:${PRETTIER_VERSION} \
-          --exclude-./deployment/helm/templates \
+          --exclude=./deployment/helm/templates \
           --file-glob=*.y*ml \
           --exec-args='--check --parser yaml --config ./.prettierrc.yml'
 
@@ -60,9 +61,13 @@ jobs:
           cp ../Dockerfile ./ &&
           export LATEST_SALEOR_TAG=$(git rev-parse $(git rev-parse HEAD)) &&
           export LATEST_SALEOR_TAG=${LATEST_SALEOR_TAG:0:6} &&
-          export RECENTLY_BUILT_IMAGES=$(curl --silent https://hub.docker.com/v2/repositories/${DOCKERHUB_URL}/tags/  | jq '.results | .[] | .name') &&
+          export RECENTLY_BUILT_IMAGES=$(
+            curl --silent https://hub.docker.com/v2/repositories/${DOCKERHUB_URL}/tags/ | \
+            jq '.results | .[] | .name'
+          ) &&
           echo ${git_diff} &&
-          if [[ ${RECENTLY_BUILT_IMAGES} != "" && ${RECENTLY_BUILT_IMAGES} == *"${LATEST_SALEOR_TAG}"* ]]; then
+          if [[ ${RECENTLY_BUILT_IMAGES} != "" && \
+              ${RECENTLY_BUILT_IMAGES} == *"${LATEST_SALEOR_TAG}"* ]]; then
             if [[ "${git_diff}" != *"Dockerfile"* ]]; then
               export SKIP=true;
             fi
@@ -70,8 +75,11 @@ jobs:
       script:
         - |
           if [[ -z ${SKIP} ]]; then
-            echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+            echo "${DOCKERHUB_PASSWORD}" | \
+            docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
             docker build --tag ${DOCKERHUB_URL}:latest . &&
-            docker tag ${DOCKERHUB_URL}:latest ${DOCKERHUB_URL}:${SALEOR_BRANCH}-${LATEST_SALEOR_TAG} &&
-            docker push ${DOCKERHUB_URL}:latest && docker push ${DOCKERHUB_URL}:${SALEOR_BRANCH}-${LATEST_SALEOR_TAG}
+            docker tag ${DOCKERHUB_URL}:latest \
+            ${DOCKERHUB_URL}:${SALEOR_BRANCH}-${LATEST_SALEOR_TAG} &&
+            docker push ${DOCKERHUB_URL}:latest && docker push \
+            ${DOCKERHUB_URL}:${SALEOR_BRANCH}-${LATEST_SALEOR_TAG}
           fi
