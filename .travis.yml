@@ -4,29 +4,33 @@ stages:
   - build
   - push
 
+env:
+  global:
+    - YAMLLINT_VERSION="1.15.0"
+    - PRETTIER_VERSION="1.16.4"
+    - WORKSPACE="/ci-actions/workspace"
+
+before_script:
+  - docker pull smoloney/ci-actions-yamllint:"${YAMLLINT_VERSION}"
+  - docker pull smoloney/ci-actions-prettier:"${PRETTIER_VERSION}"
+
 jobs:
   include:
     - stage: yaml-lint
       language: bash
-      env:
-        - YAMLLINT_VERSION="1.14.0"
-        - PRETTIER_VERSION="1.16"
-        - WORKSPACE="/ci-actions/workspace"
-      before_script:
-        - docker pull smoloney/ci-actions-yamllint:${YAMLLINT_VERSION} > /dev/null
-        - docker pull smoloney/ci-actions-prettier:${PRETTIER_VERSION} > /dev/null
       script:
         - |
-          docker run --rm -v ${PWD}:${WORKSPACE} \
-          smoloney/ci-actions-yamllint:${YAMLLINT_VERSION} \
-          --exclude=./deployment/helm/templates \
-          --exec-args='--strict --config-file=.yamllint.yml' && \
+          docker run --rm -v "${PWD}:${WORKSPACE}" \
+            smoloney/ci-actions-yamllint:"${YAMLLINT_VERSION}" \
+            --exclude='./deployment/helm/templates' \
+            --file-glob='*.y*ml' \
+            --exec-args='yamllint --strict --config-file=.yamllint.yml' && \
 
-          docker run --rm -v ${PWD}:/ci-actions/workspace \
-          smoloney/ci-actions-prettier:${PRETTIER_VERSION} \
-          --exclude=./deployment/helm/templates \
-          --file-glob=*.y*ml \
-          --exec-args='--check --parser yaml --config ./.prettierrc.yml'
+          docker run --rm -v "${PWD}:${WORKSPACE}" \
+            smoloney/ci-actions-prettier:"${PRETTIER_VERSION}" \
+            --exclude='./deployment/helm/templates' \
+            --file-glob='*.y*ml' \
+            --exec-args='prettier --check --parser yaml --config ./.prettierrc.yml'
 
     - &docker_prepare
       stage: build
