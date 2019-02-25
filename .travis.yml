@@ -1,32 +1,67 @@
 ---
 stages:
   - yaml-lint
+  - markdown-lint
+  - dockerfile-lint
+  - helm-lint
   - build
   - push
+
+global:
+  - BUNDLE_IMAGE='smoloney/ci-actions-bundle:latest'
+  - BUNDLE_IMAGE_COPYLEFT='smoloney/ci-actions-bundle-copyleft:latest'
+  - INIT_IMAGES='docker pull "${BUNDLE_IMAGE}" && docker pull "${BUNDLE_IMAGE_COPYLEFT}"'
+  - WORKSPACE='/ci-actions/workspace'
 
 jobs:
   include:
     - stage: yaml-lint
       language: bash
-      env:
-        - YAMLLINT_VERSION="1.14.0"
-        - PRETTIER_VERSION="1.16"
-        - WORKSPACE="/ci-actions/workspace"
       before_script:
-        - docker pull smoloney/ci-actions-yamllint:${YAMLLINT_VERSION} > /dev/null
-        - docker pull smoloney/ci-actions-prettier:${PRETTIER_VERSION} > /dev/null
+        - eval "${INIT_IMAGES}"
       script:
         - |
-          docker run --rm -v ${PWD}:${WORKSPACE} \
-          smoloney/ci-actions-yamllint:${YAMLLINT_VERSION} \
+          docker run --rm -v "${PWD}:${WORKSPACE}" "${BUNDLE_IMAGE_COPYLEFT}" \
           --exclude=./deployment/helm/templates \
-          --exec-args='--strict --config-file=.yamllint.yml' && \
+          --file-glob='*.y*ml' \
+          --exec-args='yamllint --strict --config-file=.yamllint.yml' && \
 
-          docker run --rm -v ${PWD}:/ci-actions/workspace \
-          smoloney/ci-actions-prettier:${PRETTIER_VERSION} \
+          docker run --rm -v "${PWD}:${WORKSPACE}" "${BUNDLE_IMAGE}" \
           --exclude=./deployment/helm/templates \
-          --file-glob=*.y*ml \
-          --exec-args='--check --parser yaml --config ./.prettierrc.yml'
+          --file-glob='*.y*ml' \
+          --exec-args='prettier --check --parser yaml --config ./.prettierrc.yml'
+
+    - stage: markdown-lint
+      language: bash
+      before_script:
+        - eval "${INIT_IMAGES}"
+      script:
+        - |
+          docker run --rm -v "${PWD}:${WORKSPACE}" "${BUNDLE_IMAGE}" \
+            --exclude='./.github/pull_request_template.md' \
+            --file-glob='*.md' \
+            --exec-args='remark --frail --rc-path ./.remarkrc' \
+            > /dev/null
+
+    - stage: dockerfile-lint
+      language: bash
+      before_script:
+        - eval "${INIT_IMAGES}"
+      script:
+        - |
+          docker run --rm -v "${PWD}:${WORKSPACE}" "${BUNDLE_IMAGE_COPYLEFT}" \
+            --file-glob='Dockerfile*' \
+            --exec-args='hadolint --config ./.hadolint.yml'
+
+    - stage: helm-lint
+      language: bash
+      image: docker:18-git
+      before_script:
+        - eval "${INIT_IMAGES}"
+      script:
+        - |
+          docker run --rm -v "${PWD}:${WORKSPACE}" ${BUNDLE_IMAGE} \
+            --exec-args='helm lint --strict ./deployment/helm'
 
     - &docker_prepare
       stage: build
