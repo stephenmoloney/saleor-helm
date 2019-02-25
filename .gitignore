@@ -1,3 +1,3 @@
 .git
-deployment/helm/charts
-deployment/helm/forked-charts/sentry/charts
+deployment/saleor/charts
+deployment/saleor/forked-charts/sentry/charts

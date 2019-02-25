@@ -8,10 +8,11 @@ stages:
   - push
 
 global:
-  - BUNDLE_IMAGE='smoloney/ci-actions-bundle:latest'
-  - BUNDLE_IMAGE_COPYLEFT='smoloney/ci-actions-bundle-copyleft:latest'
-  - INIT_IMAGES='docker pull "${BUNDLE_IMAGE}" && docker pull "${BUNDLE_IMAGE_COPYLEFT}"'
-  - WORKSPACE='/ci-actions/workspace'
+  env:
+    - BUNDLE_IMAGE='smoloney/ci-actions-bundle:latest'
+    - BUNDLE_IMAGE_COPYLEFT='smoloney/ci-actions-bundle-copyleft:latest'
+    - INIT_IMAGES='docker pull "${BUNDLE_IMAGE}" && docker pull "${BUNDLE_IMAGE_COPYLEFT}"'
+    - WORKSPACE='/ci-actions/workspace'
 
 jobs:
   include:
@@ -22,12 +23,12 @@ jobs:
       script:
         - |
           docker run --rm -v "${PWD}:${WORKSPACE}" "${BUNDLE_IMAGE_COPYLEFT}" \
-          --exclude=./deployment/helm/templates \
+          --exclude='./deployment/saleor/templates' \
           --file-glob='*.y*ml' \
           --exec-args='yamllint --strict --config-file=.yamllint.yml' && \
 
           docker run --rm -v "${PWD}:${WORKSPACE}" "${BUNDLE_IMAGE}" \
-          --exclude=./deployment/helm/templates \
+          --exclude='./deployment/saleor/templates' \
           --file-glob='*.y*ml' \
           --exec-args='prettier --check --parser yaml --config ./.prettierrc.yml'
 
@@ -61,7 +62,7 @@ jobs:
       script:
         - |
           docker run --rm -v "${PWD}:${WORKSPACE}" ${BUNDLE_IMAGE} \
-            --exec-args='helm lint --strict ./deployment/helm'
+            --exec-args='helm lint --strict ./deployment/saleor'
 
     - &docker_prepare
       stage: build

@@ -1,21 +1,20 @@
-{{- if eq .Values.saleor.persistence.enabled true }}
-{{- if and (eq .Values.saleor.nginx.serveMedia.enabled true) (eq .Values.saleor.jobs.init.prePopulateDemo.enabled true) }}
-## Note: Static files will always be served from memory (faster)
-## so these changes will apply only to /app/media
+{{- if (eq .Values.saleor.jobs.init.prePopulateDemo.enabled true) }}
 ---
-{{- $thisJob := .Values.saleor.jobs.init.nginx }}
+# If nginx is enabled and persistence is false, then nginx init will take over instead of this job
+{{- if or (eq .Values.saleor.nginx.serveMedia.enabled false) (eq .Values.saleor.persistence.enabled true) }}
+{{ $thisJob := .Values.saleor.jobs.init.prePopulateDemo }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "saleor.fullname" . }}-nginx
+  name: {{ template "saleor.fullname" . }}-db-populate-demo
   labels:
     app: {{ template "saleor.name" . }}
     chart: {{ template "saleor.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": {{ (default 6 $thisJob.weight) | quote }}
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": {{ (default 2 $thisJob.weight) | quote }}
     "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
 spec:
   activeDeadlineSeconds: {{ default 300 $thisJob.activeDeadlineSeconds }}
@@ -25,7 +24,7 @@ spec:
   completions: 1
   template:
     metadata:
-      name: {{ template "saleor.fullname" . }}-nginx
+      name: {{ template "saleor.fullname" . }}-db-populate-demo
       labels:
         app: {{ template "saleor.name" . }}
         chart: {{ template "saleor.chart" . }}
@@ -43,20 +42,19 @@ spec:
           {{- else }}
             name: {{ .Values.saleor.django.alternativeSettingsConfigMap }}
           {{- end }}
-      {{- if .Values.saleor.persistence.existingClaim }}
         - name: saleor-data-media
+        {{- if and (eq .Values.saleor.persistence.enabled true) (.Values.saleor.persistence.existingPvc) }}
           persistentVolumeClaim:
-            claimName: {{ .Values.saleor.persistence.existingClaim }}
-        {{- else }}
-        - name: saleor-data-media
+            claimName: {{ .Values.saleor.persistence.existingPvc }}
+        {{- else if (eq .Values.saleor.persistence.enabled true) }}
           persistentVolumeClaim:
             claimName: {{ default (include "saleor.fullname" .) }}
-      {{- end }}
+        {{- end }}
       restartPolicy: OnFailure
       initContainers:
         # Delay launch of this job until elasticsearch is ready
-      {{ if eq .Values.elasticsearch.enabled true }}
-        - name: {{ template "saleor.fullname" . }}-nginx-init-elasticsearch
+      {{ if eq .Values.elasticsearch.enabled true  }}
+        - name: {{ template "saleor.fullname" . }}-db-populate-init-elasticsearch
           image: "tutum/curl:trusty"
           imagePullPolicy: IfNotPresent
           command:
@@ -67,7 +65,7 @@ spec:
       {{- end }}
         # Delay launch of this job until redis is ready
       {{ if eq .Values.redis.enabled true }}
-        - name: {{ template "saleor.fullname" . }}-nginx-init-redis
+        - name: {{ template "saleor.fullname" . }}-db-populate-init-redis
           image: "redis:5-stretch"
           imagePullPolicy: IfNotPresent
 {{- include "saleor.standardEnv" . | indent 10 }}
@@ -77,15 +75,15 @@ spec:
             - >
 {{ include "saleor.redis.isReady" . | indent 14 }}
       {{- end }}
-        # Ensure correct permissions are set for media
-        - name: {{ template "saleor.fullname" . }}-nginx-init-config
-          image: "{{ .Values.saleor.nginx.image.repository }}:{{ .Values.saleor.nginx.image.tag }}"
+        # Set the correct permission for the media folder
+        - name: {{ template "saleor.fullname" . }}-db-populate-init-demo
+          image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
           imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
           command:
-            - /bin/sh
-            - -c
-            - >
-              if [ -d /app/media ]; then chown -R 1001:0 /app/media; fi
+            - chown
+            - -R
+            - 1001:0
+            - /app/media
           volumeMounts:
             - name: saleor-data-media
               mountPath: /app/media
@@ -93,19 +91,17 @@ spec:
             runAsUser: 0
             privileged: true
       containers:
-        - name: {{ template "saleor.fullname" . }}-nginx
+        - name: {{ template "saleor.fullname" . }}-db-populate-demo
           image: "{{ .Values.saleor.image.repository }}:{{ .Values.saleor.image.tag }}"
           imagePullPolicy: {{ .Values.saleor.image.pullPolicy }}
           command:
-            - /bin/bash
-            - -c
-            - >
-              python3 manage.py populatedb &&
-              python3 manage.py create_thumbnails;
-{{- include "saleor.standardEnv" . | indent 10 }}
+            - python3
+            - manage.py
+            - populatedb
           securityContext:
             runAsNonRoot: true
             runAsUser: 1001
+{{- include "saleor.standardEnv" . | indent 10 }}
           volumeMounts:
             - name: saleor-data-media
               mountPath: /app/media

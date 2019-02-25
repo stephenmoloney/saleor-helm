@@ -153,8 +153,8 @@ existingSecret: saleor-custom
 ```
 
 ```shell
-helm dependency build ./deployment/helm && \
-helm install --name saleor -f values-prod.yaml ./deployment/helm;
+helm dependency build ./deployment/saleor && \
+helm install --name saleor -f values-prod.yaml ./deployment/saleor;
 ```
 
 ## Saleor components
@@ -225,7 +225,7 @@ and/or `values.yaml` with the details of your external provider account may be r
 Parent Chart (saleor):
 
 ```text
-./deployment/helm/templates/
+./deployment/saleor/templates/
 ├── celery-deployment.yaml
 ├── celery-hpa.yaml
 ├── custom-settings.yaml
@@ -663,8 +663,8 @@ Install the helm chart
 See [Values configuration](#values-configuration)
 
 ```shell
-helm dependency build ./deployment/helm && \
-helm install --name saleor ./deployment/helm; 
+helm dependency build ./deployment/saleor && \
+helm install --name saleor ./deployment/saleor;
 ```
 
 ### Installation with custom secret
@@ -707,8 +707,8 @@ existingSecret: saleor-custom
 ```
 
 ```shell
-helm dependency build ./deployment/helm && \
-helm install --name saleor -f values-prod.yaml ./deployment/helm;
+helm dependency build ./deployment/saleor && \
+helm install --name saleor -f values-prod.yaml ./deployment/saleor;
 ```
 
 ## Upgrades

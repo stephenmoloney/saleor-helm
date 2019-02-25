@@ -42,10 +42,10 @@ spec:
               - key: nginx.conf
                 path: nginx.conf
     {{- if (eq .Values.saleor.nginx.serveMedia.enabled true) }}
-      {{- if and (eq .Values.saleor.persistence.enabled true) (.Values.saleor.persistence.existingClaim) }}
+      {{- if and (eq .Values.saleor.persistence.enabled true) .Values.saleor.persistence.existingPvc }}
         - name: saleor-data-media
           persistentVolumeClaim:
-            claimName: {{ .Values.saleor.persistence.existingClaim }}
+            claimName: {{ .Values.saleor.persistence.existingPvc }}
       {{- else if (eq .Values.saleor.persistence.enabled true) }}
         - name: saleor-data-media
           persistentVolumeClaim:

@@ -33,9 +33,9 @@ spec:
             name: {{ .Values.saleor.django.alternativeSettingsConfigMap }}
           {{- end }}
         - name: saleor-data-media
-        {{- if and (eq .Values.saleor.persistence.enabled true) (.Values.saleor.persistence.existingClaim) }}
+        {{- if and (eq .Values.saleor.persistence.enabled true) .Values.saleor.persistence.existingPvc }}
           persistentVolumeClaim:
-            claimName: {{ .Values.saleor.persistence.existingClaim }}
+            claimName: {{ .Values.saleor.persistence.existingPvc }}
         {{- else if (eq .Values.saleor.persistence.enabled true) }}
           persistentVolumeClaim:
             claimName: {{ default (include "saleor.fullname" .) }}
