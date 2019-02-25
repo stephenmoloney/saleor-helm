@@ -7,8 +7,8 @@ stages:
   - build
   - push
 
-global:
-  env:
+env:
+  global:
     - BUNDLE_IMAGE='smoloney/ci-actions-bundle:latest'
     - BUNDLE_IMAGE_COPYLEFT='smoloney/ci-actions-bundle-copyleft:latest'
     - INIT_IMAGES='docker pull "${BUNDLE_IMAGE}" && docker pull "${BUNDLE_IMAGE_COPYLEFT}"'
