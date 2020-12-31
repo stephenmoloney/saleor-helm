@@ -1,5 +1,12 @@
 # Saleor-Helm
 
+# NOTICE
+
+This repository is now deprecated. Saleor underwent some major changes around
+version 2.9.0 and required some heavy refactoring of the charts.
+
+Please see the project [eirenauts/saleor-k8s](https://github.com/eirenauts/saleor-k8s) to deploy saleor using helm.
+
 ### Goals
 
 This is a repository designed for development of saleor-helm charts. 
